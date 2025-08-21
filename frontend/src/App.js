@@ -1939,11 +1939,20 @@ function BulkImportModal({ onClose, onImport }) {
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    console.log('🎯 Modal submit triggered!');
+    console.log('🎯 Ideas text:', ideasText);
+    console.log('🎯 onImport function:', typeof onImport);
+    
     if (ideasText.trim()) {
+      console.log('🎯 Calling onImport with text:', ideasText);
       onImport(ideasText);
       onClose();
+    } else {
+      console.log('🎯 No text to import');
     }
   };
+
+  console.log('🎯 BulkImportModal rendered with onImport:', typeof onImport);
 
   return (
     <div className="modal-overlay">

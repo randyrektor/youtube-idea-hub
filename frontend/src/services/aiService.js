@@ -116,6 +116,7 @@ class AIService {
   // Analyze and score an idea based on current trends and content - now uses backend
   async analyzeIdea(idea, existingIdeas = []) {
     console.log('🔍 Using backend for idea analysis...');
+    console.log('🔍 Analyzing idea:', idea.title);
     
     try {
       // Use the backend scoring endpoint for single idea analysis
@@ -134,7 +135,18 @@ class AIService {
       }
 
       const result = await response.json();
-      const score = result.scores[0] || 75;
+      console.log('🔍 Backend response for idea:', idea.title, ':', result);
+      
+      // Get the score for this specific idea
+      let score = 75; // Default fallback
+      
+      if (result.scores && result.scores.length > 0) {
+        // Find the score that matches this idea's title
+        const ideaIndex = result.titles ? result.titles.findIndex(title => title === idea.title) : 0;
+        score = result.scores[ideaIndex] || result.scores[0] || 75;
+      }
+      
+      console.log('🔍 Final score for idea:', idea.title, ':', score);
       
       // Return a structured analysis object
       return {
