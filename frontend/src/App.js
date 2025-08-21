@@ -1266,6 +1266,7 @@ function App() {
                           selectedIdeaId={selectedIdeaId}
                           isClosingModal={isClosingModal}
                           getScoreColor={getScoreColor}
+                          onDeleteIdea={deleteIdeaFromDatabase}
                         />
                       </React.Fragment>
                     ))}
@@ -1322,6 +1323,7 @@ function App() {
                           selectedIdeaId={selectedIdeaId}
                           isClosingModal={isClosingModal}
                           getScoreColor={getScoreColor}
+                          onDeleteIdea={deleteIdeaFromDatabase}
                         />
                       </React.Fragment>
                     ))}
@@ -1378,6 +1380,7 @@ function App() {
                           selectedIdeaId={selectedIdeaId}
                           isClosingModal={isClosingModal}
                           getScoreColor={getScoreColor}
+                          onDeleteIdea={deleteIdeaFromDatabase}
                         />
                       </React.Fragment>
                     ))}
@@ -1423,6 +1426,7 @@ function App() {
                             selectedIdeaId={selectedIdeaId}
                             isClosingModal={isClosingModal}
                             getScoreColor={getScoreColor}
+                            onDeleteIdea={deleteIdeaFromDatabase}
                           />
                         ))}
                       </div>
@@ -1826,7 +1830,7 @@ Why I switched from Python to JavaScript"
 }
 
 // Idea Card
-function IdeaCard({ idea, onStatusChange, onUpdateIdea, onScoreSingleIdea, onGenerateTitles, onUpdateTitle, onUpdateTags, onDragStart, onDragEnd, onKeyDown, compact, showTitleSuggestionsModal, setShowTitleSuggestionsModal, titleSuggestions, setTitleSuggestions, setSuggestionsFlyoutPos, setSelectedIdeaId, hasShownTitleSuggestions, setHasShownTitleSuggestions, closeSuggestionsFlyout, selectedIdeaId, isClosingModal, getScoreColor }) {
+function IdeaCard({ idea, onStatusChange, onUpdateIdea, onScoreSingleIdea, onGenerateTitles, onUpdateTitle, onUpdateTags, onDragStart, onDragEnd, onKeyDown, compact, showTitleSuggestionsModal, setShowTitleSuggestionsModal, titleSuggestions, setTitleSuggestions, setSuggestionsFlyoutPos, setSelectedIdeaId, hasShownTitleSuggestions, setHasShownTitleSuggestions, closeSuggestionsFlyout, selectedIdeaId, isClosingModal, getScoreColor, onDeleteIdea }) {
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [editingTitle, setEditingTitle] = useState(idea.title);
   const [isEditingLift, setIsEditingLift] = useState(false);
@@ -2102,7 +2106,7 @@ function IdeaCard({ idea, onStatusChange, onUpdateIdea, onScoreSingleIdea, onGen
             onClick={(e) => {
               e.stopPropagation();
               if (window.confirm(`Are you sure you want to delete "${idea.title}"?`)) {
-                deleteIdeaFromDatabase(idea.id);
+                onDeleteIdea(idea.id);
               }
             }}
             title="Delete idea"
