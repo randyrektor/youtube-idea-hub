@@ -11,6 +11,7 @@ import { prefetchTitlesForIdeas, getAlternates } from './services/titleCacheServ
 import { supabase, getIdeas, createIdea, updateIdea, deleteIdea } from './config/supabase';
 
 function App() {
+  console.log('🚀 App version: BULK_IMPORT_FIX_v2.1 - ' + new Date().toISOString());
   const [ideas, setIdeas] = useState([]);
   const [showQuickAdd, setShowQuickAdd] = useState(false);
   const [quickAddTitle, setQuickAddTitle] = useState('');
@@ -1127,6 +1128,7 @@ function App() {
                   <button 
                     className="dropdown-item"
                     onClick={() => {
+                      console.log('🎯 Bulk import button clicked!');
                       setShowBulkImport(true);
                       setShowDropdown(false);
                     }}
