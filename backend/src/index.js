@@ -40,7 +40,8 @@ app.use(cors({
     'https://youtube-idea-j8ckbctsp-randy-rektors-projects-210bdba2.vercel.app',
     'https://youtube-idea-oot1gbpvm-randy-rektors-projects-210bdba2.vercel.app',
     'https://youtube-idea-rpl9j5sdh-randy-rektors-projects-210bdba2.vercel.app',
-    'https://youtube-idea-hub.vercel.app'
+                'https://youtube-idea-hub.vercel.app',
+            'https://youtube-idea-hh97anrsm-randy-rektors-projects-210bdba2.vercel.app'
   ],
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
