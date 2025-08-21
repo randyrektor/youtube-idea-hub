@@ -636,141 +636,150 @@ function App() {
   };
 
   const bulkImportIdeas = async (text) => {
-    console.log('🚀 Starting bulk import with text:', text);
-    const lines = text.split('\n').filter(line => line.trim());
-    console.log('📝 Parsed lines:', lines);
-    
-    const newIdeas = lines.map((line, index) => {
-      const originalTitle = line.trim();
-      const isTooLong = originalTitle.length > 100;
-      const truncatedTitle = isTooLong ? originalTitle.substring(0, 100) + '...' : originalTitle;
-      
-      return {
-        id: crypto.randomUUID(), // Generate unique ID
-        title: truncatedTitle,
-        description: isTooLong ? `Original title was too long: ${originalTitle}` : '',
-        thumbnail: '',
-        script: '',
-        liftLevel: 'Medium Lift', // Default value
-        contentType: 'Video', // Default value
-        tags: [],
-        status: 'idea',
-        createdAt: new Date(),
-        aiScore: 0 // Initialize with default score
-      };
-    });
-    
-    console.log('✨ Generated new ideas:', newIdeas);
-    
-    const tooLongCount = newIdeas.filter(idea => idea.description.includes('Original title was too long')).length;
-    if (tooLongCount > 0) {
-      alert(`${tooLongCount} title(s) were too long and have been truncated to 100 characters. Check the description field for the original titles.`);
-    }
-    
-    // First, save all ideas to database and get their database IDs
-    const savedIdeas = [];
-    console.log('💾 Saving ideas to database...');
-    for (const idea of newIdeas) {
-      try {
-        console.log('💾 Saving idea:', idea.title);
-        const savedIdea = await saveIdeaToDatabase(idea);
-        console.log('✅ Saved idea result:', savedIdea);
-        if (savedIdea) {
-          // Update the idea with the database ID
-          const updatedIdea = { ...idea, id: savedIdea.id };
-          savedIdeas.push(updatedIdea);
-          console.log('📝 Added to savedIdeas:', updatedIdea);
-        }
-      } catch (error) {
-        console.error('❌ Error saving idea to database:', error);
-        // Still add to savedIdeas so we can show it in the UI
-        savedIdeas.push(idea);
-      }
-    }
-    
-    console.log('💾 All ideas saved, savedIdeas:', savedIdeas);
-    
-    // Then add to local state with the updated ideas
-    setIdeas(prevIdeas => {
-      const newState = [...prevIdeas, ...savedIdeas];
-      console.log('🔄 Updated ideas state:', newState);
-      return newState;
-    });
+    console.log('🎯 BULK IMPORT FUNCTION CALLED!');
+    console.log('🎯 Text received:', text);
+    console.log('🎯 Function type:', typeof bulkImportIdeas);
     
     try {
-      const { isAIConfigured } = await import('./config/ai');
-      if (isAIConfigured()) {
-        const { default: aiService } = await import('./services/aiService');
+      console.log('🚀 Starting bulk import with text:', text);
+      const lines = text.split('\n').filter(line => line.trim());
+      console.log('📝 Parsed lines:', lines);
+      
+      const newIdeas = lines.map((line, index) => {
+        const originalTitle = line.trim();
+        const isTooLong = originalTitle.length > 100;
+        const truncatedTitle = isTooLong ? originalTitle.substring(0, 100) + '...' : originalTitle;
         
-        console.log('🤖 Starting AI scoring for', savedIdeas.length, 'ideas');
-        
-        // Mark ideas as scoring
-        setIdeas(prevIdeas =>
-          prevIdeas.map(idea =>
-            savedIdeas.some(savedIdea => savedIdea.id === idea.id)
-              ? { ...idea, isScoring: true }
+        return {
+          id: crypto.randomUUID(), // Generate unique ID
+          title: truncatedTitle,
+          description: isTooLong ? `Original title was too long: ${originalTitle}` : '',
+          thumbnail: '',
+          script: '',
+          liftLevel: 'Medium Lift', // Default value
+          contentType: 'Video', // Default value
+          tags: [],
+          status: 'idea',
+          createdAt: new Date(),
+          aiScore: 0 // Initialize with default score
+        };
+      });
+      
+      console.log('✨ Generated new ideas:', newIdeas);
+      
+      const tooLongCount = newIdeas.filter(idea => idea.description.includes('Original title was too long')).length;
+      if (tooLongCount > 0) {
+        alert(`${tooLongCount} title(s) were too long and have been truncated to 100 characters. Check the description field for the original titles.`);
+      }
+      
+      // First, save all ideas to database and get their database IDs
+      const savedIdeas = [];
+      console.log('💾 Saving ideas to database...');
+      for (const idea of newIdeas) {
+        try {
+          console.log('💾 Saving idea:', idea.title);
+          const savedIdea = await saveIdeaToDatabase(idea);
+          console.log('✅ Saved idea result:', savedIdea);
+          if (savedIdea) {
+            // Update the idea with the database ID
+            const updatedIdea = { ...idea, id: savedIdea.id };
+            savedIdeas.push(updatedIdea);
+            console.log('📝 Added to savedIdeas:', updatedIdea);
+          }
+        } catch (error) {
+          console.error('❌ Error saving idea to database:', error);
+          // Still add to savedIdeas so we can show it in the UI
+          savedIdeas.push(idea);
+        }
+      }
+      
+      console.log('💾 All ideas saved, savedIdeas:', savedIdeas);
+      
+      // Then add to local state with the updated ideas
+      setIdeas(prevIdeas => {
+        const newState = [...prevIdeas, ...savedIdeas];
+        console.log('🔄 Updated ideas state:', newState);
+        return newState;
+      });
+      
+      try {
+        const { isAIConfigured } = await import('./config/ai');
+        if (isAIConfigured()) {
+          const { default: aiService } = await import('./services/aiService');
+          
+          console.log('🤖 Starting AI scoring for', savedIdeas.length, 'ideas');
+          
+          // Mark ideas as scoring
+          setIdeas(prevIdeas =>
+            prevIdeas.map(idea =>
+              savedIdeas.some(savedIdea => savedIdea.id === idea.id)
+                ? { ...idea, isScoring: true }
+                : idea
+            )
+          );
+          
+          // Score each idea individually using the current ideas array
+          for (const idea of savedIdeas) {
+            try {
+              console.log('🤖 Scoring idea:', idea.title);
+              // Get current ideas array for context
+              const currentIdeas = ideas.filter(i => i.id !== idea.id);
+              
+              const analysis = await aiService.analyzeIdea(idea, currentIdeas);
+              console.log('📊 Analysis result for', idea.title, ':', analysis);
+              
+              const updatedIdea = {
+                ...idea,
+                aiScore: analysis.overallScore,
+                isScoring: false
+              };
+              
+              console.log('🔄 Updating idea with score:', updatedIdea);
+              
+              // Update local state
+              setIdeas(prevIdeas =>
+                prevIdeas.map(existingIdea =>
+                  existingIdea.id === idea.id
+                    ? updatedIdea
+                    : existingIdea
+                )
+              );
+              
+              // Save updated score to database
+              try {
+                console.log('💾 Saving scored idea to database:', updatedIdea.title);
+                await saveIdeaToDatabase(updatedIdea);
+                console.log('✅ Scored idea saved to database');
+              } catch (error) {
+                console.error('❌ Error saving AI score to database:', error);
+              }
+            } catch (error) {
+              console.error('❌ Error scoring idea:', idea.title, error);
+              // Mark as not scoring on error
+              setIdeas(prevIdeas =>
+                prevIdeas.map(existingIdea =>
+                  existingIdea.id === idea.id
+                    ? { ...existingIdea, isScoring: false }
+                    : existingIdea
+                )
+              );
+            }
+          }
+        }
+      } catch (error) {
+        console.error('❌ Error in bulk import AI scoring:', error);
+        // Mark all ideas as not scoring on error
+        setIdeas(prevIdeas => 
+          prevIdeas.map(idea => 
+            savedIdeas.some(savedIdea => savedIdea.id === idea.id) 
+              ? { ...idea, isScoring: false } 
               : idea
           )
         );
-        
-        // Score each idea individually using the current ideas array
-        for (const idea of savedIdeas) {
-          try {
-            console.log('🤖 Scoring idea:', idea.title);
-            // Get current ideas array for context
-            const currentIdeas = ideas.filter(i => i.id !== idea.id);
-            
-            const analysis = await aiService.analyzeIdea(idea, currentIdeas);
-            console.log('📊 Analysis result for', idea.title, ':', analysis);
-            
-            const updatedIdea = {
-              ...idea,
-              aiScore: analysis.overallScore,
-              isScoring: false
-            };
-            
-            console.log('🔄 Updating idea with score:', updatedIdea);
-            
-            // Update local state
-            setIdeas(prevIdeas =>
-              prevIdeas.map(existingIdea =>
-                existingIdea.id === idea.id
-                  ? updatedIdea
-                  : existingIdea
-              )
-            );
-            
-            // Save updated score to database
-            try {
-              console.log('💾 Saving scored idea to database:', updatedIdea.title);
-              await saveIdeaToDatabase(updatedIdea);
-              console.log('✅ Scored idea saved to database');
-            } catch (error) {
-              console.error('❌ Error saving AI score to database:', error);
-            }
-          } catch (error) {
-            console.error('❌ Error scoring idea:', idea.title, error);
-            // Mark as not scoring on error
-            setIdeas(prevIdeas =>
-              prevIdeas.map(existingIdea =>
-                existingIdea.id === idea.id
-                  ? { ...existingIdea, isScoring: false }
-                  : existingIdea
-              )
-            );
-          }
-        }
       }
     } catch (error) {
-      console.error('❌ Error in bulk import AI scoring:', error);
-      // Mark all ideas as not scoring on error
-      setIdeas(prevIdeas => 
-        prevIdeas.map(idea => 
-          savedIdeas.some(savedIdea => savedIdea.id === idea.id) 
-            ? { ...idea, isScoring: false } 
-            : idea
-        )
-      );
+      console.error('💥 CRITICAL ERROR in bulkImportIdeas:', error);
+      alert('Error during bulk import: ' + error.message);
     }
   };
 
