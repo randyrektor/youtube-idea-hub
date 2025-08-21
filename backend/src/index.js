@@ -36,6 +36,7 @@ app.use(cors({
     'http://localhost:3000', 
     'http://127.0.0.1:3000',
     'https://youtube-idea-hikedymhb-randy-rektors-projects-210bdba2.vercel.app',
+    'https://youtube-idea-d7npqbni4-randy-rektors-projects-210bdba2.vercel.app',
     'https://youtube-idea-hub.vercel.app'
   ],
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
