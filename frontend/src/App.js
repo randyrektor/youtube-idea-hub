@@ -392,7 +392,7 @@ function App() {
     }
   };
 
-  const updateIdea = async (id, updates) => {
+  const updateIdeaInState = async (id, updates) => {
     // Update local state immediately for UI responsiveness
     setIdeas(ideas.map(idea =>
       idea.id === id ? { ...idea, ...updates } : idea
@@ -436,6 +436,12 @@ function App() {
                 : idea
             )
           );
+          
+          // Trigger AI scoring for the new idea
+          if (savedIdea.id) {
+            console.log('🚀 Triggering AI scoring for new idea:', savedIdea.title);
+            scoreSingleIdeaWithAI(savedIdea.id);
+          }
         }
       } catch (error) {
         console.error('Error saving idea:', error);
@@ -463,7 +469,7 @@ function App() {
       if (aiService) {
         const result = await aiService.analyzeIdea(idea);
         if (result && result.aiScore !== undefined) {
-          updateIdea(ideaId, {
+          updateIdeaInState(ideaId, {
             aiScore: result.aiScore,
             isScoring: false,
             analyzedAt: new Date().toISOString()
@@ -1450,7 +1456,7 @@ function App() {
                         <IdeaCard 
                           idea={idea} 
                           onStatusChange={updateIdeaStatus}
-                          onUpdateIdea={updateIdea}
+                          onUpdateIdea={updateIdeaInState}
                           onScoreSingleIdea={scoreSingleIdeaWithAI}
                           onGenerateTitles={generateScoredTitleSuggestions}
                           onUpdateTitle={updateIdeaTitle}
@@ -1507,7 +1513,7 @@ function App() {
                         <IdeaCard 
                           idea={idea} 
                           onStatusChange={updateIdeaStatus}
-                          onUpdateIdea={updateIdea}
+                          onUpdateIdea={updateIdeaInState}
                           onScoreSingleIdea={scoreSingleIdeaWithAI}
                           onGenerateTitles={generateScoredTitleSuggestions}
                           onUpdateTitle={updateIdeaTitle}
@@ -1564,7 +1570,7 @@ function App() {
                         <IdeaCard 
                           idea={idea} 
                           onStatusChange={updateIdeaStatus}
-                          onUpdateIdea={updateIdea}
+                          onUpdateIdea={updateIdeaInState}
                           onScoreSingleIdea={scoreSingleIdeaWithAI}
                           onGenerateTitles={generateScoredTitleSuggestions}
                           onUpdateTitle={updateIdeaTitle}
@@ -1611,7 +1617,7 @@ function App() {
                             key={idea.id} 
                             idea={idea} 
                             onStatusChange={updateIdeaStatus}
-                            onUpdateIdea={updateIdea}
+                            onUpdateIdea={updateIdeaInState}
                             onScoreSingleIdea={scoreSingleIdeaWithAI}
                             onGenerateTitles={generateScoredTitleSuggestions}
                             onUpdateTitle={updateIdeaTitle}
