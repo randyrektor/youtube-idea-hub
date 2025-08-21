@@ -116,19 +116,27 @@ function App() {
 
   // Load ideas from database when user is authenticated
   useEffect(() => {
+    console.log('🔄 useEffect triggered - isAuthenticated:', isAuthenticated, 'user:', user ? `ID: ${user.id}` : 'null');
     if (isAuthenticated && user) {
+      console.log('✅ Conditions met, loading ideas...');
       loadIdeasFromDatabase();
+    } else {
+      console.log('❌ Conditions not met for loading ideas');
     }
   }, [isAuthenticated, user]);
 
   // Load ideas from database
   const loadIdeasFromDatabase = async () => {
     try {
+      console.log('🔄 Loading ideas from database for user:', user.id);
       const { data: ideas, error } = await getIdeas(user.id);
+      
       if (error) {
-        console.error('Error loading ideas:', error);
+        console.error('❌ Error loading ideas:', error);
         return;
       }
+      
+      console.log('📊 Raw ideas from database:', ideas);
       
       // Transform database format to app format
       const transformedIdeas = ideas.map(idea => ({
@@ -146,9 +154,10 @@ function App() {
         contentType: idea.content_type || 'Video'
       }));
       
+      console.log('✨ Transformed ideas:', transformedIdeas);
       setIdeas(transformedIdeas);
     } catch (error) {
-      console.error('Error loading ideas:', error);
+      console.error('💥 Exception loading ideas:', error);
     }
   };
 
@@ -198,6 +207,7 @@ function App() {
 
   // Handle authentication changes
   const handleAuthChange = (user) => {
+    console.log('🔐 Auth change detected:', user ? `User ID: ${user.id}` : 'No user');
     setUser(user);
     setIsAuthenticated(!!user);
   };
