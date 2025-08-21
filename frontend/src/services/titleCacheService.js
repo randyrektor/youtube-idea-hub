@@ -78,13 +78,13 @@ export async function getAlternates(title, context = "") {
   console.log(`🔄 Cache miss for: "${title}", fetching from API...`);
   
   try {
-    console.log(`🌐 Making API call to: http://localhost:3001/api/alt-titles`);
+          console.log(`🌐 Making API call to: ${process.env.REACT_APP_API_URL}/api/alt-titles`);
     console.log(`📤 Request payload:`, { title, context });
     
     let response;
     try {
       // Try backend first
-      response = await fetch("http://localhost:3001/api/alt-titles", {
+      response = await fetch(`${process.env.REACT_APP_API_URL}/api/alt-titles`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ title, context })
@@ -141,7 +141,7 @@ export async function prefetchTitlesForIdeas(ideas, maxPrefetch = TITLE_GENERATI
 
   // Check if backend is available first
   try {
-    const healthCheck = await fetch('http://localhost:3001/health');
+    const healthCheck = await fetch(`${process.env.REACT_APP_API_URL}/health`);
     if (!healthCheck.ok) {
       console.log('⚠️ Backend not available, skipping prefetch');
       lastBackendError = now;

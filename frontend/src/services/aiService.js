@@ -73,7 +73,7 @@ class AIService {
     console.log('🚀 Using backend for title generation...');
     
     try {
-      const response = await fetch('http://localhost:3001/api/generate-titles', {
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/generate-titles`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -112,7 +112,7 @@ class AIService {
     
     try {
       // Use the backend scoring endpoint for single idea analysis
-      const response = await fetch('http://localhost:3001/api/score-titles', {
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/score-titles`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -174,7 +174,7 @@ class AIService {
     
     try {
       // Use the new backend idea generation endpoint
-      const response = await fetch('http://localhost:3001/api/generate-ideas', {
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/generate-ideas`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -233,7 +233,7 @@ ${limitedIdeas.map((idea, index) => `${index + 1}) ${idea.title}`).join('\n')}`;
     try {
       console.log('🚀 Using backend for AI scoring...');
       
-      const response = await fetch('http://localhost:3001/api/score-titles', {
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/score-titles`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -563,7 +563,7 @@ ${limitedIdeas.map((idea, index) => `${index + 1}) ${idea.title}`).join('\n')}`;
       const titles = ideas.map(idea => idea.title);
       const channelSummary = `Syntax.fm - Web Development/JavaScript with 1.2M+ views on JavaScript tutorials, React development, and web dev tips`;
       
-      const response = await fetch('http://localhost:3001/api/score-titles', {
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/score-titles`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
