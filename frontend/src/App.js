@@ -8,6 +8,7 @@ import Settings from './components/Settings';
 import Auth from './components/Auth';
 import { generateFallbackTitles } from './services/titleGenerationService';
 import { prefetchTitlesForIdeas, getAlternates } from './services/titleCacheService';
+import { supabase, getIdeas, createIdea, updateIdea, deleteIdea } from './config/supabase';
 
 function App() {
   const [ideas, setIdeas] = useState([]);
@@ -111,8 +112,89 @@ function App() {
     const savedTheme = localStorage.getItem('youtube-idea-hub-theme') || 'light';
     setTheme(savedTheme);
     document.body.className = `theme-${savedTheme}`;
-    setIdeas([]);
   }, []);
+
+  // Load ideas from database when user is authenticated
+  useEffect(() => {
+    if (isAuthenticated && user) {
+      loadIdeasFromDatabase();
+    }
+  }, [isAuthenticated, user]);
+
+  // Load ideas from database
+  const loadIdeasFromDatabase = async () => {
+    try {
+      const { data: ideas, error } = await getIdeas(user.id);
+      if (error) {
+        console.error('Error loading ideas:', error);
+        return;
+      }
+      
+      // Transform database format to app format
+      const transformedIdeas = ideas.map(idea => ({
+        id: idea.id,
+        title: idea.title,
+        description: idea.description || '',
+        thumbnail: idea.thumbnail || '',
+        script: idea.script || '',
+        tags: idea.tags || [],
+        status: idea.status || 'idea',
+        aiScore: idea.ai_score || 0,
+        createdAt: new Date(idea.created_at),
+        updatedAt: new Date(idea.updated_at),
+        liftLevel: idea.lift_level || 'Medium Lift',
+        contentType: idea.content_type || 'Video'
+      }));
+      
+      setIdeas(transformedIdeas);
+    } catch (error) {
+      console.error('Error loading ideas:', error);
+    }
+  };
+
+  // Save idea to database
+  const saveIdeaToDatabase = async (idea) => {
+    try {
+      const ideaData = {
+        user_id: user.id,
+        title: idea.title,
+        description: idea.description || '',
+        thumbnail: idea.thumbnail || '',
+        script: idea.script || '',
+        tags: idea.tags || [],
+        status: idea.status || 'idea',
+        ai_score: idea.aiScore || 0,
+        lift_level: idea.liftLevel || 'Medium Lift',
+        content_type: idea.contentType || 'Video'
+      };
+
+      if (idea.id && idea.id.length > 20) { // Database UUID
+        // Update existing idea
+        const { error } = await updateIdea(idea.id, ideaData);
+        if (error) throw error;
+      } else {
+        // Create new idea
+        const { data, error } = await createIdea(ideaData);
+        if (error) throw error;
+        return data[0];
+      }
+    } catch (error) {
+      console.error('Error saving idea:', error);
+    }
+  };
+
+  // Delete idea from database and local state
+  const deleteIdeaFromDatabase = async (ideaId) => {
+    try {
+      const { error } = await deleteIdea(ideaId);
+      if (error) throw error;
+      
+      // Remove from local state
+      setIdeas(prevIdeas => prevIdeas.filter(idea => idea.id !== ideaId));
+    } catch (error) {
+      console.error('Error deleting idea:', error);
+    }
+  };
 
   // Handle authentication changes
   const handleAuthChange = (user) => {
@@ -155,7 +237,6 @@ function App() {
     const ideasToAdd = Array.isArray(ideaData) ? ideaData : [ideaData];
     const newIdeas = ideasToAdd.map(idea => ({
       ...idea,
-      id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
       createdAt: new Date(),
       status: 'idea',
       liftLevel: idea.lift + ' Lift',
@@ -163,16 +244,33 @@ function App() {
       tags: idea.tags || []
     }));
     
+    // Add to local state first for immediate UI feedback
     setIdeas(prevIdeas => [...prevIdeas, ...newIdeas]);
     
     try {
+      // Save to database
+      for (const idea of newIdeas) {
+        const savedIdea = await saveIdeaToDatabase(idea);
+        if (savedIdea) {
+          // Update local state with database ID
+          setIdeas(prevIdeas =>
+            prevIdeas.map(prevIdea =>
+              prevIdea.title === idea.title && !prevIdea.id?.startsWith('db_')
+                ? { ...prevIdea, id: savedIdea.id }
+                : prevIdea
+            )
+          );
+        }
+      }
+      
+      // AI scoring
       const { isAIConfigured } = await import('./config/ai');
       if (isAIConfigured()) {
         const { default: aiService } = await import('./services/aiService');
         
         setIdeas(prevIdeas =>
           prevIdeas.map(idea =>
-            newIdeas.some(newIdea => newIdea.id === idea.id)
+            newIdeas.some(newIdea => newIdea.title === idea.title)
               ? { ...idea, isScoring: true }
               : idea
           )
@@ -182,14 +280,17 @@ function App() {
           const scoredIdeas = await aiService.fastBatchScore(newIdeas);
           setIdeas(prevIdeas =>
             prevIdeas.map(idea => {
-              const scoredIdea = scoredIdeas.find(scored => scored.id === idea.id);
+              const scoredIdea = scoredIdeas.find(scored => scored.title === idea.title);
               if (scoredIdea) {
-                return {
+                const updatedIdea = {
                   ...idea,
                   aiScore: scoredIdea.aiScore,
                   isScoring: false,
                   analyzedAt: scoredIdea.analyzedAt
                 };
+                // Save updated score to database
+                saveIdeaToDatabase(updatedIdea);
+                return updatedIdea;
               }
               return idea;
             })
@@ -198,7 +299,7 @@ function App() {
           const analysis = await aiService.analyzeIdea(newIdeas[0], ideas);
           setIdeas(prevIdeas =>
             prevIdeas.map(idea =>
-              idea.id === newIdeas[0].id
+              idea.title === newIdeas[0].title
                 ? {
                     ...idea,
                     aiScore: analysis.overallScore,
@@ -208,16 +309,23 @@ function App() {
                 : idea
             )
           );
+          
+          // Save updated score to database
+          const updatedIdea = ideas.find(idea => idea.title === newIdeas[0].title);
+          if (updatedIdea) {
+            saveIdeaToDatabase(updatedIdea);
+          }
         }
       }
     } catch (error) {
       setIdeas(prevIdeas =>
         prevIdeas.map(idea =>
-          newIdeas.some(newIdea => newIdea.id === idea.id)
+          newIdeas.some(newIdea => newIdea.title === idea.title)
             ? { ...idea, isScoring: false }
             : idea
         )
       );
+      console.error('Error adding idea:', error);
     }
   };
 
@@ -1988,6 +2096,18 @@ function IdeaCard({ idea, onStatusChange, onUpdateIdea, onScoreSingleIdea, onGen
             title="Generate title suggestions"
           >
             ✦
+          </button>
+          <button 
+            className="delete-btn"
+            onClick={(e) => {
+              e.stopPropagation();
+              if (window.confirm(`Are you sure you want to delete "${idea.title}"?`)) {
+                deleteIdeaFromDatabase(idea.id);
+              }
+            }}
+            title="Delete idea"
+          >
+            ×
           </button>
         </div>
       </div>

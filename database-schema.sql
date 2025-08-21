@@ -26,6 +26,8 @@ CREATE TABLE IF NOT EXISTS public.ideas (
   tags TEXT[] DEFAULT '{}',
   status TEXT DEFAULT 'idea' CHECK (status IN ('idea', 'in-progress', 'completed', 'archived')),
   ai_score INTEGER DEFAULT 0 CHECK (ai_score >= 0 AND ai_score <= 100),
+  lift_level TEXT DEFAULT 'Medium Lift',
+  content_type TEXT DEFAULT 'Video',
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
