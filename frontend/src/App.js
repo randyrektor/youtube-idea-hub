@@ -247,22 +247,26 @@ function App() {
     // Add to local state first for immediate UI feedback
     setIdeas(prevIdeas => [...prevIdeas, ...newIdeas]);
     
-    try {
-      // Save to database
-      for (const idea of newIdeas) {
+    // Save new ideas to database
+    for (const idea of newIdeas) {
+      try {
         const savedIdea = await saveIdeaToDatabase(idea);
         if (savedIdea) {
           // Update local state with database ID
           setIdeas(prevIdeas =>
-            prevIdeas.map(prevIdea =>
-              prevIdea.title === idea.title && !prevIdea.id?.startsWith('db_')
-                ? { ...prevIdea, id: savedIdea.id }
-                : prevIdea
+            prevIdeas.map(existingIdea =>
+              existingIdea.title === idea.title && !existingIdea.id?.startsWith('db_')
+                ? { ...existingIdea, id: savedIdea.id }
+                : existingIdea
             )
           );
         }
+      } catch (error) {
+        console.error('Error saving bulk imported idea:', error);
       }
-      
+    }
+    
+    try {
       // AI scoring
       const { isAIConfigured } = await import('./config/ai');
       if (isAIConfigured()) {
@@ -329,23 +333,36 @@ function App() {
     }
   };
 
-  const updateIdeaStatus = (id, status) => {
+  const updateIdeaStatus = async (id, status) => {
+    // Update local state immediately for UI responsiveness
     setIdeas(ideas.map(idea =>
       idea.id === id ? { ...idea, status } : idea
     ));
+    
+    // Save to database
+    const idea = ideas.find(i => i.id === id);
+    if (idea) {
+      await saveIdeaToDatabase({ ...idea, status });
+    }
   };
 
-  const updateIdea = (id, updates) => {
+  const updateIdea = async (id, updates) => {
+    // Update local state immediately for UI responsiveness
     setIdeas(ideas.map(idea =>
       idea.id === id ? { ...idea, ...updates } : idea
     ));
+    
+    // Save to database
+    const idea = ideas.find(i => i.id === id);
+    if (idea) {
+      await saveIdeaToDatabase({ ...idea, ...updates });
+    }
   };
 
   // Quick add idea handler
-  const handleQuickAddSubmit = () => {
+  const handleQuickAddSubmit = async () => {
     if (quickAddTitle.trim()) {
       const newIdea = {
-        id: Date.now().toString(),
         title: quickAddTitle.trim(),
         description: quickAddDescription.trim(),
         thumbnail: '',
@@ -353,12 +370,31 @@ function App() {
         tags: [],
         status: 'idea',
         createdAt: new Date(),
-        liftLevel: undefined,
-        contentType: undefined,
-        aiScore: undefined
+        liftLevel: 'Medium Lift',
+        contentType: 'Video',
+        aiScore: 0
       };
       
+      // Add to local state first for immediate UI feedback
       setIdeas(prevIdeas => [...prevIdeas, newIdea]);
+      
+      // Save to database
+      try {
+        const savedIdea = await saveIdeaToDatabase(newIdea);
+        if (savedIdea) {
+          // Update local state with database ID
+          setIdeas(prevIdeas =>
+            prevIdeas.map(idea =>
+              idea.title === newIdea.title && !idea.id?.startsWith('db_')
+                ? { ...idea, id: savedIdea.id }
+                : idea
+            )
+          );
+        }
+      } catch (error) {
+        console.error('Error saving idea:', error);
+      }
+      
       setQuickAddTitle('');
       setQuickAddDescription('');
       setShowQuickAdd(false);
@@ -475,7 +511,7 @@ function App() {
     }));
   };
 
-  const handleDrop = (e, targetStatus) => {
+  const handleDrop = async (e, targetStatus) => {
     e.preventDefault();
     e.currentTarget.classList.remove('drag-over');
     
@@ -516,6 +552,15 @@ function App() {
         });
         
         setIdeas(finalIdeas);
+        
+        // Save status changes to database
+        if (removedIdea.status !== targetStatus) {
+          try {
+            await saveIdeaToDatabase(removedIdea);
+          } catch (error) {
+            console.error('Error saving status change:', error);
+          }
+        }
       }
     }
     
@@ -538,7 +583,8 @@ function App() {
     }
   };
 
-  const updateIdeaTitle = (id, title, newScore = null) => {
+  const updateIdeaTitle = async (id, title, newScore = null) => {
+    // Update local state immediately for UI responsiveness
     setIdeas(ideas.map(idea =>
       idea.id === id ? {
         ...idea,
@@ -546,12 +592,25 @@ function App() {
         ...(newScore && { aiScore: newScore.totalScore })
       } : idea
     ));
+    
+    // Save to database
+    const idea = ideas.find(i => i.id === id);
+    if (idea) {
+      await saveIdeaToDatabase({ ...idea, title, ...(newScore && { aiScore: newScore.totalScore }) });
+    }
   };
 
-  const updateIdeaTags = (id, tags) => {
+  const updateIdeaTags = async (id, tags) => {
+    // Update local state immediately for UI responsiveness
     setIdeas(ideas.map(idea =>
       idea.id === id ? { ...idea, tags } : idea
     ));
+    
+    // Save to database
+    const idea = ideas.find(i => i.id === id);
+    if (idea) {
+      await saveIdeaToDatabase({ ...idea, tags });
+    }
   };
 
   const bulkImportIdeas = async (text) => {
