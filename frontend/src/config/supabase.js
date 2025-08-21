@@ -48,6 +48,11 @@ export const getCurrentUser = async () => {
   return { user, error };
 };
 
+export const getSessionToken = async () => {
+  const { data: { session }, error } = await supabase.auth.getSession();
+  return session?.access_token || null;
+};
+
 export const onAuthStateChange = (callback) => {
   return supabase.auth.onAuthStateChange(callback);
 };

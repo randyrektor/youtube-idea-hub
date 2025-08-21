@@ -1,4 +1,13 @@
 import { AI_CONFIG } from '../config/ai';
+import { getSessionToken } from '../config/supabase';
+
+const getAuthHeaders = async () => {
+  const token = await getSessionToken();
+  return {
+    'Content-Type': 'application/json',
+    ...(token && { 'Authorization': `Bearer ${token}` })
+  };
+};
 
 class AIService {
   constructor() {
@@ -75,9 +84,7 @@ class AIService {
     try {
       const response = await fetch(`${process.env.REACT_APP_API_URL}/api/generate-titles`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: await getAuthHeaders(),
         body: JSON.stringify({
           title: idea.title,
           context: `Web development, JavaScript, modern programming - ${idea.contentType || 'friendly and educational'}`
@@ -114,9 +121,7 @@ class AIService {
       // Use the backend scoring endpoint for single idea analysis
       const response = await fetch(`${process.env.REACT_APP_API_URL}/api/score-titles`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: await getAuthHeaders(),
         body: JSON.stringify({
           titles: [idea.title],
           channelSummary: 'Web development, JavaScript, modern programming - Syntax.fm focused',
@@ -176,9 +181,7 @@ class AIService {
       // Use the new backend idea generation endpoint
       const response = await fetch(`${process.env.REACT_APP_API_URL}/api/generate-ideas`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: await getAuthHeaders(),
         body: JSON.stringify({
           ideaPrompt,
           channelFocus,
@@ -235,9 +238,7 @@ ${limitedIdeas.map((idea, index) => `${index + 1}) ${idea.title}`).join('\n')}`;
       
       const response = await fetch(`${process.env.REACT_APP_API_URL}/api/score-titles`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: await getAuthHeaders(),
         body: JSON.stringify({
           titles: limitedIdeas.map(idea => idea.title),
           channelSummary: 'Web development, JavaScript, modern programming - Syntax.fm focused',
@@ -565,9 +566,7 @@ ${limitedIdeas.map((idea, index) => `${index + 1}) ${idea.title}`).join('\n')}`;
       
       const response = await fetch(`${process.env.REACT_APP_API_URL}/api/score-titles`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: await getAuthHeaders(),
         body: JSON.stringify({
           titles,
           channelSummary,

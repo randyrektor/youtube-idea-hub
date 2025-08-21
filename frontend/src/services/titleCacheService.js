@@ -1,5 +1,6 @@
 // Title Cache Service - Prefetch and cache title suggestions for instant feel
 import { TITLE_GENERATION_CONFIG } from '../config/titleGenerationConfig';
+import { getSessionToken } from '../config/supabase';
 
 // Simple LRU cache implementation
 class LRUCache {
@@ -60,6 +61,14 @@ function debounce(func, wait) {
   };
 }
 
+const getAuthHeaders = async () => {
+  const token = await getSessionToken();
+  return {
+    'Content-Type': 'application/json',
+    ...(token && { 'Authorization': `Bearer ${token}` })
+  };
+};
+
 // Get cached alternates or fetch from API
 export async function getAlternates(title, context = "") {
   if (!title || title.trim().length === 0) {
@@ -86,7 +95,7 @@ export async function getAlternates(title, context = "") {
       // Try backend first
       response = await fetch(`${process.env.REACT_APP_API_URL}/api/alt-titles`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: await getAuthHeaders(),
         body: JSON.stringify({ title, context })
       });
       console.log(`✅ Backend API call successful`);
@@ -95,7 +104,7 @@ export async function getAlternates(title, context = "") {
       // Fallback to relative URL (in case backend is not available)
       response = await fetch("/api/alt-titles", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: await getAuthHeaders(),
         body: JSON.stringify({ title, context })
       });
       console.log(`⚠️ Using fallback API call`);
