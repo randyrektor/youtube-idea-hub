@@ -32,7 +32,12 @@ if (!getOpenAIAPIKey()) {
 
 // Middleware
 app.use(cors({
-  origin: ['http://localhost:3000', 'http://127.0.0.1:3000'],
+  origin: [
+    'http://localhost:3000', 
+    'http://127.0.0.1:3000',
+    'https://youtube-idea-hikedymhb-randy-rektors-projects-210bdba2.vercel.app',
+    'https://youtube-idea-hub.vercel.app'
+  ],
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
   credentials: true
