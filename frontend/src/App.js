@@ -187,15 +187,18 @@ function App() {
       if (idea.id && idea.id.length > 20) { // Database UUID
         // Update existing idea
         console.log('💾 Updating existing idea with ID:', idea.id);
-        const result = await updateIdea(idea.id, ideaData);
-        console.log('💾 updateIdea result:', result);
+        console.log('💾 updateIdea function:', typeof updateIdea, updateIdea);
+        console.log('💾 Available functions:', { getIdeas, createIdea, updateIdea, deleteIdea });
         
-        if (!result) {
-          throw new Error('updateIdea returned undefined');
-        }
-        
-        if (result.error) throw result.error;
-        return idea; // Return the updated idea
+          const result = await updateIdea(idea.id, ideaData);
+          console.log('💾 updateIdea result:', result);
+          
+          if (!result) {
+            throw new Error('updateIdea returned undefined');
+          }
+          
+          if (result.error) throw result.error;
+          return idea; // Return the updated idea
       } else {
         // Create new idea
         console.log('💾 Creating new idea');
