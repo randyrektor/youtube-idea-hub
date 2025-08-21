@@ -168,6 +168,8 @@ function App() {
   // Save idea to database
   const saveIdeaToDatabase = async (idea) => {
     try {
+      console.log('💾 saveIdeaToDatabase called with idea:', idea);
+      
       const ideaData = {
         user_id: user.id,
         title: idea.title,
@@ -179,20 +181,36 @@ function App() {
         ai_score: idea.aiScore || 0
         // lift_level and content_type will be added after database schema update
       };
+      
+      console.log('💾 Prepared ideaData:', ideaData);
 
       if (idea.id && idea.id.length > 20) { // Database UUID
         // Update existing idea
-        const { error } = await updateIdea(idea.id, ideaData);
-        if (error) throw error;
+        console.log('💾 Updating existing idea with ID:', idea.id);
+        const result = await updateIdea(idea.id, ideaData);
+        console.log('💾 updateIdea result:', result);
+        
+        if (!result) {
+          throw new Error('updateIdea returned undefined');
+        }
+        
+        if (result.error) throw result.error;
         return idea; // Return the updated idea
       } else {
         // Create new idea
-        const { data, error } = await createIdea(ideaData);
-        if (error) throw error;
-        return data[0];
+        console.log('💾 Creating new idea');
+        const result = await createIdea(ideaData);
+        console.log('💾 createIdea result:', result);
+        
+        if (!result) {
+          throw new Error('createIdea returned undefined');
+        }
+        
+        if (result.error) throw result.error;
+        return result.data[0];
       }
     } catch (error) {
-      console.error('Error saving idea:', error);
+      console.error('💾 Error saving idea:', error);
       throw error; // Re-throw so calling code can handle it
     }
   };
