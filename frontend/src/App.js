@@ -45,6 +45,7 @@ function App() {
   const [user, setUser] = useState(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [showUserDropdown, setShowUserDropdown] = useState(false);
+  const userRef = useRef(null);
 
   // Title suggestions state
   const [showTitleSuggestionsModal, setShowTitleSuggestionsModal] = useState(false);
@@ -123,7 +124,7 @@ function App() {
     } else {
       console.log('❌ Conditions not met for loading ideas');
     }
-  }, [isAuthenticated, user]);
+  }, [isAuthenticated, user?.id]);
 
   // Load ideas from database
   const loadIdeasFromDatabase = async () => {
@@ -207,6 +208,13 @@ function App() {
   // Handle authentication changes
   const handleAuthChange = (user) => {
     console.log('🔐 Auth change detected:', user ? `User ID: ${user.id}` : 'No user');
+    
+    // Prevent multiple rapid state updates
+    if (user?.id === userRef.current?.id) {
+      return;
+    }
+    
+    userRef.current = user;
     setUser(user);
     setIsAuthenticated(!!user);
   };
@@ -633,6 +641,7 @@ function App() {
       const truncatedTitle = isTooLong ? originalTitle.substring(0, 100) + '...' : originalTitle;
       
       return {
+        id: crypto.randomUUID(), // Generate unique ID
         title: truncatedTitle,
         description: isTooLong ? `Original title was too long: ${originalTitle}` : '',
         thumbnail: '',
@@ -641,7 +650,8 @@ function App() {
         contentType: 'Video', // Default value
         tags: [],
         status: 'idea',
-        createdAt: new Date()
+        createdAt: new Date(),
+        aiScore: 0 // Initialize with default score
       };
     });
     
@@ -650,6 +660,16 @@ function App() {
       alert(`${tooLongCount} title(s) were too long and have been truncated to 100 characters. Check the description field for the original titles.`);
     }
     
+    // First, save all ideas to database
+    for (const idea of newIdeas) {
+      try {
+        await saveIdeaToDatabase(idea);
+      } catch (error) {
+        console.error('Error saving idea to database:', error);
+      }
+    }
+    
+    // Then add to local state
     setIdeas(prevIdeas => [...prevIdeas, ...newIdeas]);
     
     try {
@@ -657,6 +677,7 @@ function App() {
       if (isAIConfigured()) {
         const { default: aiService } = await import('./services/aiService');
         
+        // Mark ideas as scoring
         setIdeas(prevIdeas =>
           prevIdeas.map(idea =>
             newIdeas.some(newIdea => newIdea.id === idea.id)
@@ -665,6 +686,7 @@ function App() {
           )
         );
         
+        // Score each idea individually
         for (const idea of newIdeas) {
           try {
             const analysis = await aiService.analyzeIdea(idea, ideas);
@@ -675,6 +697,7 @@ function App() {
               isScoring: false
             };
             
+            // Update local state
             setIdeas(prevIdeas =>
               prevIdeas.map(existingIdea =>
                 existingIdea.id === idea.id
@@ -683,13 +706,15 @@ function App() {
               )
             );
             
-            // Save the AI score to database
+            // Save updated score to database
             try {
               await saveIdeaToDatabase(updatedIdea);
             } catch (error) {
               console.error('Error saving AI score to database:', error);
             }
           } catch (error) {
+            console.error('Error scoring idea:', error);
+            // Mark as not scoring on error
             setIdeas(prevIdeas =>
               prevIdeas.map(existingIdea =>
                 existingIdea.id === idea.id
@@ -701,6 +726,8 @@ function App() {
         }
       }
     } catch (error) {
+      console.error('Error in bulk import AI scoring:', error);
+      // Mark all ideas as not scoring on error
       setIdeas(prevIdeas => 
         prevIdeas.map(idea => 
           newIdeas.some(newIdea => newIdea.id === idea.id) 
