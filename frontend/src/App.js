@@ -107,6 +107,8 @@ function App() {
     dragOverColumn: null,
     dropIndex: null
   });
+  
+  const [isBulkImporting, setIsBulkImporting] = useState(false);
 
   // Load theme and initialize ideas
   useEffect(() => {
@@ -425,6 +427,12 @@ function App() {
 
   // Score single idea with AI
   const scoreSingleIdeaWithAI = async (ideaId) => {
+    // Don't score individual ideas during bulk import
+    if (isBulkImporting) {
+      console.log('🚫 Skipping individual scoring during bulk import for:', ideaId);
+      return;
+    }
+    
     try {
       const idea = ideas.find(i => i.id === ideaId);
       if (!idea) return;
@@ -640,6 +648,9 @@ function App() {
     console.log('🎯 Text received:', text);
     console.log('🎯 Function type:', typeof bulkImportIdeas);
     
+    // Set bulk import flag to prevent individual idea scoring
+    setIsBulkImporting(true);
+    
     try {
       console.log('🚀 Starting bulk import with text:', text);
       const lines = text.split('\n').filter(line => line.trim());
@@ -791,6 +802,10 @@ function App() {
     } catch (error) {
       console.error('💥 CRITICAL ERROR in bulkImportIdeas:', error);
       alert('Error during bulk import: ' + error.message);
+    } finally {
+      // Always reset the bulk import flag
+      setIsBulkImporting(false);
+      console.log('🏁 Bulk import completed, individual scoring re-enabled');
     }
   };
 
