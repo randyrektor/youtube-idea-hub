@@ -310,23 +310,26 @@ function App() {
           );
         } else {
           const analysis = await aiService.analyzeIdea(newIdeas[0], ideas);
+          const updatedIdea = {
+            ...newIdeas[0],
+            aiScore: analysis.overallScore,
+            isScoring: false,
+            analyzedAt: new Date().toISOString()
+          };
+          
           setIdeas(prevIdeas =>
             prevIdeas.map(idea =>
               idea.title === newIdeas[0].title
-                ? {
-                    ...idea,
-                    aiScore: analysis.overallScore,
-                    isScoring: false,
-                    analyzedAt: new Date().toISOString()
-                  }
+                ? updatedIdea
                 : idea
             )
           );
           
           // Save updated score to database
-          const updatedIdea = ideas.find(idea => idea.title === newIdeas[0].title);
-          if (updatedIdea) {
-            saveIdeaToDatabase(updatedIdea);
+          try {
+            await saveIdeaToDatabase(updatedIdea);
+          } catch (error) {
+            console.error('Error saving AI score to database:', error);
           }
         }
       }
@@ -666,13 +669,26 @@ function App() {
           try {
             const analysis = await aiService.analyzeIdea(idea, ideas);
             
+            const updatedIdea = {
+              ...idea,
+              aiScore: analysis.overallScore,
+              isScoring: false
+            };
+            
             setIdeas(prevIdeas =>
               prevIdeas.map(existingIdea =>
                 existingIdea.id === idea.id
-                  ? { ...existingIdea, aiScore: analysis.overallScore, isScoring: false }
+                  ? updatedIdea
                   : existingIdea
               )
             );
+            
+            // Save the AI score to database
+            try {
+              await saveIdeaToDatabase(updatedIdea);
+            } catch (error) {
+              console.error('Error saving AI score to database:', error);
+            }
           } catch (error) {
             setIdeas(prevIdeas =>
               prevIdeas.map(existingIdea =>
