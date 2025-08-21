@@ -472,7 +472,8 @@ function App() {
         throw new Error('AI service not available');
       }
     } catch (error) {
-      updateIdea(ideaId, { isScoring: false });
+      console.error('❌ Error in scoreSingleIdeaWithAI:', error);
+      updateIdeaInState(ideaId, { isScoring: false });
     }
   };
 
