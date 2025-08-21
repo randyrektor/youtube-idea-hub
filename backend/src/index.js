@@ -32,17 +32,29 @@ if (!getOpenAIAPIKey()) {
 
 // Middleware
 app.use(cors({
-  origin: [
-    'http://localhost:3000',
-    'http://127.0.0.1:3000',
-    'https://youtube-idea-hikedymhb-randy-rektors-projects-210bdba2.vercel.app',
-    'https://youtube-idea-d7npqbni4-randy-rektors-projects-210bdba2.vercel.app',
-    'https://youtube-idea-j8ckbctsp-randy-rektors-projects-210bdba2.vercel.app',
-    'https://youtube-idea-oot1gbpvm-randy-rektors-projects-210bdba2.vercel.app',
-    'https://youtube-idea-rpl9j5sdh-randy-rektors-projects-210bdba2.vercel.app',
-                'https://youtube-idea-hub.vercel.app',
-            'https://youtube-idea-hh97anrsm-randy-rektors-projects-210bdba2.vercel.app'
-  ],
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+    
+    // Allow localhost for development
+    if (origin.startsWith('http://localhost:') || origin.startsWith('http://127.0.0.1:')) {
+      return callback(null, true);
+    }
+    
+    // Allow ANY Vercel deployment
+    if (origin.includes('vercel.app') || origin.includes('vercel.com')) {
+      return callback(null, true);
+    }
+    
+    // Allow your custom domain if you have one
+    if (origin.includes('youtube-idea-hub')) {
+      return callback(null, true);
+    }
+    
+    // Log blocked origins for debugging
+    console.log('🚫 CORS blocked origin:', origin);
+    callback(new Error('Not allowed by CORS'));
+  },
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
   credentials: true

@@ -418,21 +418,13 @@ function App() {
         aiScore: 0
       };
       
-      // Add to local state first for immediate UI feedback
-      setIdeas(prevIdeas => [...prevIdeas, newIdea]);
-      
-      // Save to database
+      // Save to database first
       try {
         const savedIdea = await saveIdeaToDatabase(newIdea);
         if (savedIdea) {
-          // Update local state with database ID
-          setIdeas(prevIdeas =>
-            prevIdeas.map(idea =>
-              idea.title === newIdea.title && !idea.id?.startsWith('db_')
-                ? { ...idea, id: savedIdea.id }
-                : idea
-            )
-          );
+          // Add to local state with the database ID
+          const ideaWithId = { ...newIdea, id: savedIdea.id };
+          setIdeas(prevIdeas => [...prevIdeas, ideaWithId]);
           
           // Trigger AI scoring for the new idea
           if (savedIdea.id) {
@@ -442,6 +434,8 @@ function App() {
         }
       } catch (error) {
         console.error('Error saving idea:', error);
+        // Only add to local state if database save failed
+        setIdeas(prevIdeas => [...prevIdeas, newIdea]);
       }
       
       setQuickAddTitle('');
@@ -687,7 +681,6 @@ function App() {
         const truncatedTitle = isTooLong ? originalTitle.substring(0, 100) + '...' : originalTitle;
         
         return {
-          id: crypto.randomUUID(), // Generate unique ID
           title: truncatedTitle,
           description: isTooLong ? `Original title was too long: ${originalTitle}` : '',
           thumbnail: '',
