@@ -18,6 +18,13 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   }
 });
 
+// Debug: Log Supabase client status
+console.log('🔧 Supabase client initialized:', {
+  url: supabaseUrl ? '✅ Present' : '❌ Missing',
+  key: supabaseAnonKey ? '✅ Present' : '❌ Missing',
+  client: supabase ? '✅ Created' : '❌ Failed'
+});
+
 // Auth helper functions
 export const signUpWithEmail = async (email, password) => {
   const { data, error } = await supabase.auth.signUp({
@@ -68,20 +75,42 @@ export const getIdeas = async (userId) => {
 };
 
 export const createIdea = async (idea) => {
-  const { data, error } = await supabase
-    .from('ideas')
-    .insert([idea])
-    .select();
-  return { data, error };
+  console.log('🔧 createIdea called with:', idea);
+  console.log('🔧 Supabase client:', supabase);
+  console.log('🔧 Supabase URL:', supabaseUrl);
+  
+  try {
+    const result = await supabase
+      .from('ideas')
+      .insert([idea])
+      .select();
+    
+    console.log('🔧 createIdea raw result:', result);
+    return result;
+  } catch (error) {
+    console.error('🔧 createIdea error:', error);
+    return { data: null, error };
+  }
 };
 
 export const updateIdea = async (id, updates) => {
-  const { data, error } = await supabase
-    .from('ideas')
-    .update(updates)
-    .eq('id', id)
-    .select();
-  return { data, error };
+  console.log('🔧 updateIdea called with:', { id, updates });
+  console.log('🔧 Supabase client:', supabase);
+  console.log('🔧 Supabase URL:', supabaseUrl);
+  
+  try {
+    const result = await supabase
+      .from('ideas')
+      .update(updates)
+      .eq('id', id)
+      .select();
+    
+    console.log('🔧 updateIdea raw result:', result);
+    return result;
+  } catch (error) {
+    console.error('🔧 updateIdea error:', error);
+    return { data: null, error };
+  }
 };
 
 export const deleteIdea = async (id) => {
