@@ -150,8 +150,8 @@ function App() {
         aiScore: idea.ai_score || 0,
         createdAt: new Date(idea.created_at),
         updatedAt: new Date(idea.updated_at),
-        liftLevel: idea.lift_level || 'Medium Lift',
-        contentType: idea.content_type || 'Video'
+        liftLevel: 'Medium Lift', // Default value until database is updated
+        contentType: 'Video' // Default value until database is updated
       }));
       
       console.log('✨ Transformed ideas:', transformedIdeas);
@@ -172,9 +172,8 @@ function App() {
         script: idea.script || '',
         tags: idea.tags || [],
         status: idea.status || 'idea',
-        ai_score: idea.aiScore || 0,
-        lift_level: idea.liftLevel || 'Medium Lift',
-        content_type: idea.contentType || 'Video'
+        ai_score: idea.aiScore || 0
+        // lift_level and content_type will be added after database schema update
       };
 
       if (idea.id && idea.id.length > 20) { // Database UUID
@@ -380,8 +379,8 @@ function App() {
         tags: [],
         status: 'idea',
         createdAt: new Date(),
-        liftLevel: 'Medium Lift',
-        contentType: 'Video',
+        liftLevel: 'Medium Lift', // Default value
+        contentType: 'Video', // Default value
         aiScore: 0
       };
       
@@ -631,13 +630,12 @@ function App() {
       const truncatedTitle = isTooLong ? originalTitle.substring(0, 100) + '...' : originalTitle;
       
       return {
-        id: (Date.now() + index).toString(),
         title: truncatedTitle,
         description: isTooLong ? `Original title was too long: ${originalTitle}` : '',
         thumbnail: '',
         script: '',
-        liftLevel: 'Mid Lift',
-        contentType: 'Other',
+        liftLevel: 'Medium Lift', // Default value
+        contentType: 'Video', // Default value
         tags: [],
         status: 'idea',
         createdAt: new Date()
