@@ -719,13 +719,16 @@ function App() {
           );
           
           // Score each idea individually using the current ideas array
+          let currentIdeasContext = ideas; // Start with current ideas
+          
           for (const idea of savedIdeas) {
             try {
               console.log('🤖 Scoring idea:', idea.title);
-              // Get current ideas array for context
-              const currentIdeas = ideas.filter(i => i.id !== idea.id);
+              // Get current context excluding this idea
+              const contextForThisIdea = currentIdeasContext.filter(i => i.id !== idea.id);
+              console.log('🎯 Context for', idea.title, ':', contextForThisIdea.length, 'ideas');
               
-              const analysis = await aiService.analyzeIdea(idea, currentIdeas);
+              const analysis = await aiService.analyzeIdea(idea, contextForThisIdea);
               console.log('📊 Analysis result for', idea.title, ':', analysis);
               
               const updatedIdea = {
@@ -744,6 +747,14 @@ function App() {
                     : existingIdea
                 )
               );
+              
+              // Update our local context for the next iteration
+              currentIdeasContext = currentIdeasContext.map(existingIdea =>
+                existingIdea.id === idea.id
+                  ? updatedIdea
+                  : existingIdea
+              );
+              console.log('🔄 Updated context for next iteration:', currentIdeasContext.length, 'ideas');
               
               // Save updated score to database
               try {
