@@ -3420,3 +3420,58 @@ body.theme-dark .delete-btn:hover {
   background: rgba(255, 107, 107, 0.2);
   color: #ff5252;
 }
+
+/* Delete Overlay Styles */
+.delete-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  z-index: 100;
+  animation: fadeIn 0.2s ease;
+}
+
+.delete-action-btn {
+  background: #e74c3c;
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 12px rgba(231, 76, 60, 0.3);
+}
+
+.delete-action-btn:hover {
+  background: #c0392b;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(231, 76, 60, 0.4);
+}
+
+body.theme-dark .delete-action-btn {
+  background: #ff6b6b;
+  box-shadow: 0 4px 12px rgba(255, 107, 107, 0.3);
+}
+
+body.theme-dark .delete-action-btn:hover {
+  background: #ff5252;
+  box-shadow: 0 6px 16px rgba(255, 107, 107, 0.4);
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}

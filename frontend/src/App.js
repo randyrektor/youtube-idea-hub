@@ -1835,8 +1835,58 @@ function IdeaCard({ idea, onStatusChange, onUpdateIdea, onScoreSingleIdea, onGen
   const [editingTitle, setEditingTitle] = useState(idea.title);
   const [isEditingLift, setIsEditingLift] = useState(false);
   const [isEditingType, setIsEditingType] = useState(false);
-  const [showTagSuggestions, setShowTagSuggestions] = useState(false);
-  
+  const [isEditingTags, setIsEditingTags] = useState(false);
+  const [showDeleteOption, setShowDeleteOption] = useState(false);
+  const [longPressTimer, setLongPressTimer] = useState(null);
+
+  // Long press handler for delete
+  const handleLongPress = () => {
+    setShowDeleteOption(true);
+    // Auto-hide after 3 seconds
+    setTimeout(() => setShowDeleteOption(false), 3000);
+  };
+
+  const handleMouseDown = () => {
+    const timer = setTimeout(handleLongPress, 800); // 800ms long press
+    setLongPressTimer(timer);
+  };
+
+  const handleMouseUp = () => {
+    if (longPressTimer) {
+      clearTimeout(longPressTimer);
+      setLongPressTimer(null);
+    }
+  };
+
+  const handleMouseLeave = () => {
+    if (longPressTimer) {
+      clearTimeout(longPressTimer);
+      setLongPressTimer(null);
+    }
+  };
+
+  // Touch event handlers for mobile
+  const handleTouchStart = () => {
+    const timer = setTimeout(handleLongPress, 800); // 800ms long press
+    setLongPressTimer(timer);
+  };
+
+  const handleTouchEnd = () => {
+    if (longPressTimer) {
+      clearTimeout(longPressTimer);
+      setLongPressTimer(null);
+    }
+  };
+
+  // Cleanup timer on unmount
+  useEffect(() => {
+    return () => {
+      if (longPressTimer) {
+        clearTimeout(longPressTimer);
+      }
+    };
+  }, [longPressTimer]);
+
   const MAX_TITLE_LENGTH = 100;
   const titleLength = editingTitle.length;
   const isTitleTooLong = titleLength > MAX_TITLE_LENGTH;
@@ -2066,6 +2116,11 @@ function IdeaCard({ idea, onStatusChange, onUpdateIdea, onScoreSingleIdea, onGen
       onKeyDown={(e) => onKeyDown(e, idea, 'drag')}
       style={{ position: 'relative' }}
       data-scoring={idea.isScoring ? 'true' : 'false'}
+      onMouseDown={handleMouseDown}
+      onMouseUp={handleMouseUp}
+      onMouseLeave={handleMouseLeave}
+      onTouchStart={handleTouchStart}
+      onTouchEnd={handleTouchEnd}
     >
       <div className="card-header">
         <div className="title-container">
@@ -2101,18 +2156,7 @@ function IdeaCard({ idea, onStatusChange, onUpdateIdea, onScoreSingleIdea, onGen
           >
             ✦
           </button>
-          <button 
-            className="delete-btn"
-            onClick={(e) => {
-              e.stopPropagation();
-              if (window.confirm(`Are you sure you want to delete "${idea.title}"?`)) {
-                onDeleteIdea(idea.id);
-              }
-            }}
-            title="Delete idea"
-          >
-            ×
-          </button>
+
         </div>
       </div>
 
@@ -2216,7 +2260,25 @@ function IdeaCard({ idea, onStatusChange, onUpdateIdea, onScoreSingleIdea, onGen
           
         </div>
       )}
-      
+
+      {/* Delete Option Overlay */}
+      {showDeleteOption && (
+        <div className="delete-overlay">
+          <button 
+            className="delete-action-btn"
+            onClick={(e) => {
+              e.stopPropagation();
+              setShowDeleteOption(false);
+              if (window.confirm(`Are you sure you want to delete "${idea.title}"?`)) {
+                onDeleteIdea(idea.id);
+              }
+            }}
+            title="Delete idea"
+          >
+            🗑️ Delete
+          </button>
+        </div>
+      )}
 
     </div>
   );
