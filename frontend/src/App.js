@@ -154,8 +154,7 @@ function App() {
         aiScore: idea.ai_score || 0,
         createdAt: new Date(idea.created_at),
         updatedAt: new Date(idea.updated_at),
-        liftLevel: 'Medium Lift', // Default value until database is updated
-        contentType: 'Video' // Default value until database is updated
+
       }));
       
       console.log('✨ Transformed ideas:', transformedIdeas);
@@ -282,8 +281,7 @@ function App() {
       ...idea,
       createdAt: new Date(),
       status: 'idea',
-      liftLevel: idea.lift + ' Lift',
-      contentType: idea.type,
+      
       tags: idea.tags || []
     }));
     
@@ -416,8 +414,7 @@ function App() {
         tags: [],
         status: 'idea',
         createdAt: new Date(),
-        liftLevel: 'Medium Lift', // Default value
-        contentType: 'Video', // Default value
+
         aiScore: 0
       };
       
@@ -695,8 +692,7 @@ function App() {
           description: isTooLong ? `Original title was too long: ${originalTitle}` : '',
           thumbnail: '',
           script: '',
-          liftLevel: 'Medium Lift', // Default value
-          contentType: 'Video', // Default value
+
           tags: [],
           status: 'idea',
           createdAt: new Date(),
