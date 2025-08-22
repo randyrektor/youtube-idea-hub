@@ -25,6 +25,14 @@ console.log('🔧 Supabase client initialized:', {
   client: supabase ? '✅ Created' : '❌ Failed'
 });
 
+// Log the actual values (partially masked for security)
+if (supabaseUrl) {
+  console.log('🔧 Supabase URL:', supabaseUrl.substring(0, 30) + '...');
+}
+if (supabaseAnonKey) {
+  console.log('🔧 Supabase Key:', supabaseAnonKey.substring(0, 20) + '...');
+}
+
 // Auth helper functions
 export const signUpWithEmail = async (email, password) => {
   const { data, error } = await supabase.auth.signUp({
@@ -68,11 +76,28 @@ export const onAuthStateChange = (callback) => {
 export const getIdeas = async (userId = null) => {
   // For team database, load all ideas regardless of user_id
   // userId parameter kept for backward compatibility but not used for filtering
-  const { data, error } = await supabase
-    .from('ideas')
-    .select('*')
-    .order('created_at', { ascending: false });
-  return { data, error };
+  console.log('🔍 getIdeas called - checking database connection...');
+  console.log('🔍 Supabase URL:', supabaseUrl);
+  console.log('🔍 Supabase client:', supabase);
+  
+  try {
+    const { data, error } = await supabase
+      .from('ideas')
+      .select('*')
+      .order('created_at', { ascending: false });
+    
+    console.log('🔍 Database query result:', { data, error });
+    console.log('🔍 Data length:', data?.length || 0);
+    
+    if (error) {
+      console.error('❌ Database error:', error);
+    }
+    
+    return { data, error };
+  } catch (err) {
+    console.error('❌ Exception in getIdeas:', err);
+    return { data: null, error: err };
+  }
 };
 
 export const createIdea = async (idea) => {
