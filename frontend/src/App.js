@@ -162,8 +162,8 @@ function App() {
         tags: idea.tags || [],
         status: idea.status || 'idea',
         aiScore: idea.ai_score || 0,
-        liftLevel: idea.lift_level || 'Medium Lift',
-        contentType: idea.content_type || 'Video',
+        liftLevel: idea.lift_level || undefined,
+        contentType: idea.content_type || undefined,
         createdAt: new Date(idea.created_at),
         updatedAt: new Date(idea.updated_at),
       }));
@@ -228,8 +228,9 @@ function App() {
         script: idea.script || '',
         tags: idea.tags || [],
         status: idea.status || 'idea',
-        ai_score: idea.aiScore || 0
-        // Temporarily removed lift_level and content_type to debug 400 error
+        ai_score: idea.aiScore || 0,
+        lift_level: idea.liftLevel || undefined,
+        content_type: idea.contentType || undefined
       };
       
       console.log('💾 Prepared ideaData:', ideaData);
@@ -515,8 +516,8 @@ function App() {
         status: 'idea',
         createdAt: new Date(),
         aiScore: 0,
-        liftLevel: 'Medium Lift',
-        contentType: 'Video'
+        liftLevel: undefined,
+        contentType: undefined
       };
       
       // Save to database first, then add to local state only after successful save
@@ -1223,6 +1224,28 @@ function App() {
       <header className="app-header">
         <div className="header-left">
           <h1> YouTube Idea Hub</h1>
+          {isAuthenticated && user && (
+            <div className="collaborative-users">
+              <div className="current-user-badge">
+                <div className="user-avatar-small">
+                  {user?.user_metadata?.avatar_url ? (
+                    <img 
+                      src={user.user_metadata.avatar_url} 
+                      alt={user.user_metadata?.full_name || 'You'} 
+                      className="avatar-image-small"
+                      title={`${user.user_metadata?.full_name || user.email} (You)`}
+                    />
+                  ) : (
+                    <div className="avatar-initials-small" title={`${user.user_metadata?.full_name || user.email} (You)`}>
+                      {user?.user_metadata?.full_name?.[0] || user?.email?.[0] || 'U'}
+                    </div>
+                  )}
+                </div>
+                <span className="user-status">You</span>
+              </div>
+              {/* Future: Add other collaborative users here */}
+            </div>
+          )}
         </div>
         <div className="header-right">
           <div className="header-actions">
