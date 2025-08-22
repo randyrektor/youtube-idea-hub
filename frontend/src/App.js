@@ -28,6 +28,8 @@ function App() {
   const [showQuickAdd, setShowQuickAdd] = useState(false);
   const [quickAddTitle, setQuickAddTitle] = useState('');
   const [quickAddDescription, setQuickAddDescription] = useState('');
+  const [quickAddLift, setQuickAddLift] = useState('');
+  const [quickAddCategory, setQuickAddCategory] = useState('');
   const [showBulkImport, setShowBulkImport] = useState(false);
   const [showDropdown, setShowDropdown] = useState(false);
   const [viewMode, setViewMode] = useState('board');
@@ -372,13 +374,28 @@ function App() {
   };
 
   const addIdea = async (ideaData) => {
+    console.log('🔄 addIdea called with:', ideaData);
     const ideasToAdd = Array.isArray(ideaData) ? ideaData : [ideaData];
-    const newIdeas = ideasToAdd.map(idea => ({
-      ...idea,
-      createdAt: new Date(),
-      status: 'idea',
-      tags: idea.tags || []
-    }));
+    const newIdeas = ideasToAdd.map(idea => {
+      console.log('🔄 Processing idea:', idea);
+      console.log('🔄 idea.lift:', idea.lift);
+      console.log('🔄 idea.type:', idea.type);
+      console.log('🔄 idea.liftLevel:', idea.liftLevel);
+      console.log('🔄 idea.contentType:', idea.contentType);
+      
+      const mappedIdea = {
+        ...idea,
+        // Map QuickAddModal fields to database fields
+        liftLevel: idea.lift || idea.liftLevel || undefined,
+        contentType: idea.type || idea.contentType || undefined,
+        createdAt: new Date(),
+        status: 'idea',
+        tags: idea.tags || []
+      };
+      
+      console.log('🔄 Mapped idea:', mappedIdea);
+      return mappedIdea;
+    });
     
     // Save new ideas to database first, then add to local state only after successful save
     const savedIdeas = [];
@@ -577,8 +594,8 @@ function App() {
         status: 'idea',
         createdAt: new Date(),
         aiScore: 0,
-        liftLevel: undefined,
-        contentType: undefined
+        liftLevel: quickAddLift || undefined,
+        contentType: quickAddCategory || undefined
       };
       
       // Save to database first, then add to local state only after successful save
@@ -598,6 +615,8 @@ function App() {
           // Clear form and close modal only after successful save
           setQuickAddTitle('');
           setQuickAddDescription('');
+          setQuickAddLift('');
+          setQuickAddCategory('');
           setShowQuickAdd(false);
         }
       } catch (error) {
@@ -1584,6 +1603,8 @@ function App() {
                               setShowQuickAdd(false);
                               setQuickAddTitle('');
                               setQuickAddDescription('');
+                              setQuickAddLift('');
+                              setQuickAddCategory('');
                             }
                           }}
                           className="lofi-title-input"
@@ -1603,6 +1624,39 @@ function App() {
                           className="lofi-description-input"
                           rows={2}
                         />
+                        
+                        {/* Lift and Category fields */}
+                        <div className="lofi-form-row">
+                          <select
+                            value={quickAddLift || ''}
+                            onChange={(e) => setQuickAddLift(e.target.value)}
+                            className="lofi-select-input"
+                          >
+                            <option value="">Set Lift Level</option>
+                            <option value="Low">Low Lift</option>
+                            <option value="Mid">Mid Lift</option>
+                            <option value="Huge">Huge Lift</option>
+                          </select>
+                          
+                          <select
+                            value={quickAddCategory || ''}
+                            onChange={(e) => setQuickAddCategory(e.target.value)}
+                            className="lofi-select-input"
+                          >
+                            <option value="">Set Content Type</option>
+                            <option value="Other">Other</option>
+                            <option value="Makeover/Transform">Makeover/Transform</option>
+                            <option value="Challenge/Competition">Challenge/Competition</option>
+                            <option value="Reaction/Commentary">Reaction/Commentary</option>
+                            <option value="Game/Quiz">Game/Quiz</option>
+                            <option value="Tier List/Debate">Tier List/Debate</option>
+                            <option value="Repeatable Segment">Repeatable Segment</option>
+                            <option value="Nostalgia/Culture/Trend">Nostalgia/Culture/Trend</option>
+                            <option value="Build/Tutorial">Build/Tutorial</option>
+                            <option value="Review/Comparison">Review/Comparison</option>
+                          </select>
+                        </div>
+                        
                         <div className="lofi-form-actions">
                           <button 
                             className="lofi-submit-btn"
@@ -1617,6 +1671,8 @@ function App() {
                               setShowQuickAdd(false);
                               setQuickAddTitle('');
                               setQuickAddDescription('');
+                              setQuickAddLift('');
+                              setQuickAddCategory('');
                             }}
                           >
                             Cancel
@@ -2065,8 +2121,8 @@ function QuickAddModal({ onClose, onAdd }) {
   const [formData, setFormData] = useState({
     title: '',
     description: '',
-    lift: 'Mid',
-    type: 'Other',
+    lift: '',
+    type: '',
     owners: '',
     tags: ''
   });
@@ -2084,13 +2140,19 @@ function QuickAddModal({ onClose, onAdd }) {
       return;
     }
     
-    onAdd({
+    const ideaData = {
       ...formData,
       owners: formData.owners.split(',').map(owner => owner.trim()).filter(Boolean),
       tags: formData.tags.split(',').map(tag => tag.trim()).filter(Boolean),
       thumbnail: '',
       script: ''
-    });
+    };
+    
+    console.log('🔄 QuickAddModal handleSubmit sending:', ideaData);
+    console.log('🔄 formData.lift:', formData.lift);
+    console.log('🔄 formData.type:', formData.type);
+    
+    onAdd(ideaData);
     onClose();
   };
 
@@ -2121,13 +2183,13 @@ function QuickAddModal({ onClose, onAdd }) {
           
           <div className="form-row">
             <div className="form-group">
-              <label htmlFor="lift">Lift Level *</label>
+              <label htmlFor="lift">Lift Level</label>
               <select
                 id="lift"
                 value={formData.lift}
                 onChange={(e) => setFormData({...formData, lift: e.target.value})}
-                required
               >
+                <option value="">Set Lift Level</option>
                 <option value="Low">Low Lift</option>
                 <option value="Mid">Mid Lift</option>
                 <option value="Huge">Huge Lift</option>
@@ -2135,13 +2197,13 @@ function QuickAddModal({ onClose, onAdd }) {
             </div>
             
             <div className="form-group">
-              <label htmlFor="type">Content Type *</label>
+              <label htmlFor="type">Content Type</label>
               <select
                 id="type"
                 value={formData.type}
                 onChange={(e) => setFormData({...formData, type: e.target.value})}
-                required
               >
+                <option value="">Set Content Type</option>
                 <option value="Other">Other</option>
                 <option value="Makeover/Transform">Makeover/Transform</option>
                 <option value="Challenge/Competition">Challenge/Competition</option>
