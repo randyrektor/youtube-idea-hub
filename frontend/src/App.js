@@ -230,8 +230,7 @@ function App() {
         status: idea.status || 'idea',
         ai_score: idea.aiScore || 0,
         lift_level: idea.liftLevel || 'Medium Lift',
-        content_type: idea.contentType || 'Video',
-        updated_at: new Date().toISOString()
+        content_type: idea.contentType || 'Video'
       };
       
       console.log('💾 Prepared ideaData:', ideaData);
