@@ -130,6 +130,25 @@ function App() {
     const savedTheme = localStorage.getItem('youtube-idea-hub-theme') || 'light';
     setTheme(savedTheme);
     document.body.className = `theme-${savedTheme}`;
+    
+    // Check for existing session on app load
+    const checkExistingSession = async () => {
+      try {
+        const { getCurrentUser } = await import('./config/supabase');
+        const { user, error } = await getCurrentUser();
+        
+        if (user && !error) {
+          console.log('🔐 Found existing session for user:', user.id);
+          handleAuthChange(user);
+        } else {
+          console.log('🔐 No existing session found');
+        }
+      } catch (error) {
+        console.error('❌ Error checking existing session:', error);
+      }
+    };
+    
+    checkExistingSession();
   }, []);
 
   // Load ideas from database when user is authenticated
@@ -152,6 +171,32 @@ function App() {
       console.log('❌ Conditions not met for loading ideas');
     }
   }, [isAuthenticated, user?.id]);
+
+  // Set up authentication state listener
+  useEffect(() => {
+    console.log('🔐 Setting up auth state listener...');
+    
+    const { onAuthStateChange } = require('./config/supabase');
+    const { data: { subscription } } = onAuthStateChange((event, session) => {
+      console.log('🔐 Auth state change:', event, session?.user?.id || 'no user');
+      
+      if (event === 'SIGNED_IN' && session?.user) {
+        console.log('🔐 User signed in:', session.user.id);
+        handleAuthChange(session.user);
+      } else if (event === 'SIGNED_OUT') {
+        console.log('🔐 User signed out');
+        handleAuthChange(null);
+      } else if (event === 'TOKEN_REFRESHED' && session?.user) {
+        console.log('🔐 Token refreshed for user:', session.user.id);
+        handleAuthChange(session.user);
+      }
+    });
+
+    return () => {
+      console.log('🔐 Cleaning up auth state listener');
+      subscription?.unsubscribe();
+    };
+  }, []);
 
   // Load ideas from database
   const loadIdeasFromDatabase = async () => {
@@ -1441,9 +1486,19 @@ function App() {
                   <div className="dropdown-actions">
                     <button 
                       className="dropdown-action-item"
-                      onClick={() => {
-                        handleAuthChange(null);
-                        setShowUserDropdown(false);
+                      onClick={async () => {
+                        try {
+                          const { signOut } = await import('./config/supabase');
+                          await signOut();
+                          handleAuthChange(null);
+                          setShowUserDropdown(false);
+                          console.log('✅ Successfully signed out');
+                        } catch (error) {
+                          console.error('❌ Error signing out:', error);
+                          // Still try to clear local state even if Supabase sign out fails
+                          handleAuthChange(null);
+                          setShowUserDropdown(false);
+                        }
                       }}
                     >
                       Sign Out
