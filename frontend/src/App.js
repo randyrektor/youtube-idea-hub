@@ -228,12 +228,13 @@ function App() {
         script: idea.script || '',
         tags: idea.tags || [],
         status: idea.status || 'idea',
-        ai_score: idea.aiScore || 0,
-        lift_level: idea.liftLevel || 'Medium Lift',
-        content_type: idea.contentType || 'Video'
+        ai_score: idea.aiScore || 0
+        // Temporarily removed lift_level and content_type to debug 400 error
       };
       
       console.log('💾 Prepared ideaData:', ideaData);
+      console.log('💾 ideaData keys:', Object.keys(ideaData));
+      console.log('💾 ideaData values:', Object.values(ideaData));
 
       if (idea.id && idea.id.length > 20) { // Database UUID
         // Update existing idea with conflict detection
@@ -264,6 +265,7 @@ function App() {
         console.log('💾 Creating new idea');
         const result = await createIdea(ideaData);
         console.log('💾 createIdea result:', result);
+        console.log('💾 createIdea error details:', result?.error);
         
         if (!result) {
           throw new Error('createIdea returned undefined');
@@ -274,6 +276,7 @@ function App() {
       }
     } catch (error) {
       console.error('💾 Error saving idea:', error);
+      console.error('💾 Error details:', error.message, error.details, error.hint);
       throw error; // Re-throw so calling code can handle it
     }
   };
