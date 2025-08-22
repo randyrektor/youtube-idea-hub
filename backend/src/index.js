@@ -572,7 +572,7 @@ Return exactly: {"ideas":[{"title":"...","description":"...","type":"...","lift"
             },
             { role: 'user', content: prompt }
           ],
-          max_tokens: 300,            // enough for multiple ideas with descriptions
+          max_tokens: Math.max(300, count * 100), // scale tokens with idea count
           temperature: 0.8,           // creative but consistent
           response_format: { type: 'json_object' }, // JSON mode = no explanations
           presence_penalty: 0.3       // reduce repeats without bloating output
@@ -594,6 +594,11 @@ Return exactly: {"ideas":[{"title":"...","description":"...","type":"...","lift"
       }
       
       console.log(`✅ Generated ${ideas.length} ideas in ${data.usage?.total_tokens || 'unknown'} tokens`);
+      
+      // Validate that we got the requested number of ideas
+      if (ideas.length < count) {
+        console.warn(`⚠️ Requested ${count} ideas but only got ${ideas.length}`);
+      }
       
       // Score the generated ideas using the existing scoring endpoint
       try {

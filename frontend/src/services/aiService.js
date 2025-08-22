@@ -216,9 +216,15 @@ class AIService {
   }
 
   // Batch analyze multiple ideas for ranking - OPTIMIZED VERSION
-  async batchAnalyzeIdeas(ideas) {
-    console.log('🚨 batchAnalyzeIdeas called with:', ideas.length, 'ideas');
+  async batchAnalyzeIdeas(ideas, forceRescore = false) {
+    console.log('🚨 batchAnalyzeIdeas called with:', ideas.length, 'ideas', 'forceRescore:', forceRescore);
     console.log('🚨 First idea title:', ideas[0]?.title);
+    
+    // If force rescore is requested, clear cache for all ideas
+    if (forceRescore) {
+      console.log('🔄 Force rescore requested - clearing cache for all ideas');
+      ideas.forEach(idea => this.clearCache(idea.id));
+    }
     
 
 

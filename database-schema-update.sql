@@ -1,20 +1,19 @@
--- Database Migration: Add lift_level and content_type columns
--- Run this on your live Supabase database
+-- Database Schema Update for YouTube Idea Hub
+-- This file contains the SQL commands to update the existing database schema
 
--- Add the missing columns to the existing ideas table
-ALTER TABLE public.ideas 
-ADD COLUMN IF NOT EXISTS lift_level TEXT DEFAULT 'Mid Lift',
-ADD COLUMN IF NOT EXISTS content_type TEXT DEFAULT 'Build/Tutorial';
+-- Update the status constraint to allow 'ready' status
+-- First, drop the existing constraint
+ALTER TABLE public.ideas DROP CONSTRAINT IF EXISTS ideas_status_check;
 
--- Update existing ideas to have the default values
+-- Add the new constraint that includes 'ready'
+ALTER TABLE public.ideas ADD CONSTRAINT ideas_status_check 
+  CHECK (status IN ('idea', 'in-progress', 'ready', 'completed', 'archived'));
+
+-- Update any existing ideas that might have invalid status values
+-- (This shouldn't be necessary but is a safety measure)
 UPDATE public.ideas 
-SET 
-  lift_level = COALESCE(lift_level, 'Mid Lift'),
-  content_type = COALESCE(content_type, 'Build/Tutorial')
-WHERE lift_level IS NULL OR content_type IS NULL;
+SET status = 'idea' 
+WHERE status NOT IN ('idea', 'in-progress', 'ready', 'completed', 'archived');
 
--- Verify the columns were added
-SELECT column_name, data_type, is_nullable, column_default 
-FROM information_schema.columns 
-WHERE table_name = 'ideas' 
-AND column_name IN ('lift_level', 'content_type');
+-- Verify the constraint was applied
+-- You can run this to check: SELECT constraint_name, check_clause FROM information_schema.check_constraints WHERE table_name = 'ideas';

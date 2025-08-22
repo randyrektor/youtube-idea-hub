@@ -75,11 +75,13 @@ const AIIdeaGenerator: React.FC<AIIdeaGeneratorProps> = ({
     setSelectedIdeas(new Set());
 
     try {
+      console.log(`🚀 Generating ${ideaCount} ideas with prompt: "${ideaPrompt}"`);
       const ideas = await aiService.generateNewIdeas(existingIdeas, ideaPrompt, channelFocus, ideaCount);
+      console.log(`✅ Generated ${ideas.length} ideas successfully`);
       setGeneratedIdeas(ideas);
     } catch (error) {
-      console.error('Error generating ideas:', error);
-      setError('Failed to generate ideas. Please try again.');
+      console.error('❌ Error generating ideas:', error);
+      setError(`Failed to generate ideas: ${error.message}`);
     } finally {
       setIsGenerating(false);
     }

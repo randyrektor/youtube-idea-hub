@@ -577,8 +577,8 @@ function App() {
         status: 'idea',
         createdAt: new Date(),
         aiScore: 0,
-        liftLevel: '',
-        contentType: ''
+        liftLevel: undefined,
+        contentType: undefined
       };
       
       // Save to database first, then add to local state only after successful save

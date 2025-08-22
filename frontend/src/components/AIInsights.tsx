@@ -61,7 +61,9 @@ const AIInsights: React.FC<AIInsightsProps> = ({ ideas, onUpdateIdeas }) => {
     setError(null);
 
     try {
-      const analyzedIdeas = await aiService.batchAnalyzeIdeas(ideas);
+      // Force rescore all ideas by clearing cache and passing board context
+      console.log('🔄 Starting full rescore of all ideas with board context...');
+      const analyzedIdeas = await aiService.batchAnalyzeIdeas(ideas, true); // true = force rescore
       
       // Update ideas with AI scores
       const updatedIdeas = ideas.map((idea: any) => {
