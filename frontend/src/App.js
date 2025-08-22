@@ -1354,9 +1354,6 @@ function App() {
           <h1> YouTube Idea Hub</h1>
           {isAuthenticated && user && (
             <div className="collaborative-users">
-              <div className="team-indicator">
-                <span className="team-badge">👥 Team Workspace</span>
-              </div>
               <div className="current-user-badge">
                 <div className="user-avatar-small">
                   {user?.user_metadata?.avatar_url ? (
