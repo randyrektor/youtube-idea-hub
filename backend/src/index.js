@@ -115,6 +115,7 @@ app.put('/api/user/preferences', authenticateUser, async (req, res) => {
 
 // Routes
 app.get('/health', (req, res) => {
+  // Health check endpoint - updated to trigger Render deployment
   res.json({
     status: 'ok',
     timestamp: new Date().toISOString(),
