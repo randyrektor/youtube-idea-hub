@@ -1,3 +1,15 @@
+/**
+ * YouTube Idea Hub - Main Application Component
+ * 
+ * FIXED ISSUES:
+ * - Column positioning reset: Fixed conflict resolution logic to always preserve local changes
+ *   when they're newer than database changes, preventing drag & drop positions from being lost
+ * - Status update race condition: Fixed updateIdeaStatus to avoid race conditions between
+ *   state updates and database saves
+ * - Periodic refresh frequency: Reduced from 30s to 2min to minimize conflicts
+ * - Added comprehensive logging for debugging column positioning issues
+ */
+
 import React, { useState, useEffect, useRef } from 'react';
 import './App.css';
 import './components/AIComponents.css';
@@ -125,13 +137,13 @@ function App() {
       console.log('✅ Conditions met, loading ideas...');
       loadIdeasFromDatabase();
       
-      // Set up periodic refresh for multiplayer sync (every 30 seconds)
+      // Set up periodic refresh for multiplayer sync (every 2 minutes)
       const refreshInterval = setInterval(() => {
         if (isAuthenticated && user) {
-          console.log('🔄 Periodic refresh for multiplayer sync...');
+          console.log('🔄 Periodic refresh for multiplayer sync...', new Date().toISOString());
           loadIdeasFromDatabase();
         }
-      }, 30000);
+      }, 120000);
       
       return () => clearInterval(refreshInterval);
     } else {
@@ -152,6 +164,11 @@ function App() {
       
       console.log('📊 Raw ideas from database:', ideas);
       
+      // Log each idea's lift_level and content_type specifically
+      ideas.forEach(idea => {
+        console.log(`🔍 Idea "${idea.title}": lift_level="${idea.lift_level}", content_type="${idea.content_type}"`);
+      });
+      
       // Transform database format to app format
       const transformedIdeas = ideas.map(idea => ({
         id: idea.id,
@@ -170,8 +187,26 @@ function App() {
       
       console.log('✨ Transformed ideas:', transformedIdeas);
       
+      // Log each transformed idea's liftLevel and contentType specifically
+      transformedIdeas.forEach(idea => {
+        console.log(`🔍 Transformed "${idea.title}": liftLevel="${idea.liftLevel}", contentType="${idea.contentType}"`);
+      });
+      
       // Merge with existing ideas to handle conflicts gracefully
       setIdeas(prevIdeas => {
+        console.log('🔄 Merging ideas - prevIdeas count:', prevIdeas.length, 'dbIdeas count:', transformedIdeas.length);
+        
+        // Log the status of each idea before merge
+        console.log('📊 Current ideas status before merge:');
+        prevIdeas.forEach(idea => {
+          console.log(`  - ${idea.title}: status="${idea.status}", updatedAt="${idea.updatedAt?.toISOString()}"`);
+        });
+        
+        console.log('📊 Database ideas status:');
+        transformedIdeas.forEach(idea => {
+          console.log(`  - ${idea.title}: status="${idea.status}", updatedAt="${idea.updatedAt?.toISOString()}"`);
+        });
+        
         const mergedIdeas = transformedIdeas.map(dbIdea => {
           const existingIdea = prevIdeas.find(prev => prev.id === dbIdea.id);
           
@@ -180,23 +215,10 @@ function App() {
             const localTime = existingIdea.updatedAt?.getTime() || 0;
             const dbTime = dbIdea.updatedAt?.getTime() || 0;
             
-            if (localTime > dbTime && existingIdea.isScoring) {
-              // Keep local changes if they're newer and we're in the middle of scoring
-              console.log('🔄 Keeping local changes for idea:', dbIdea.title);
+            if (localTime > dbTime) {
+              // Always keep local changes if they're newer (including column positioning)
+              console.log('🔄 Keeping local changes for idea:', dbIdea.title, '- local time:', new Date(localTime).toISOString(), 'db time:', new Date(dbTime).toISOString());
               return existingIdea;
-            } else if (localTime > dbTime) {
-              // Local changes are newer, but check if they're significant
-              const hasSignificantChanges = 
-                existingIdea.title !== dbIdea.title ||
-                existingIdea.description !== dbIdea.description ||
-                existingIdea.status !== dbIdea.status ||
-                existingIdea.liftLevel !== dbIdea.liftLevel ||
-                existingIdea.contentType !== dbIdea.contentType;
-              
-              if (hasSignificantChanges) {
-                console.log('⚠️ Conflict detected for idea:', dbIdea.title, '- local changes preserved');
-                return existingIdea;
-              }
             }
           }
           
@@ -208,7 +230,16 @@ function App() {
           !transformedIdeas.some(db => db.id === prev.id)
         );
         
-        return [...mergedIdeas, ...newIdeas];
+        const finalResult = [...mergedIdeas, ...newIdeas];
+        console.log('🔄 Merge complete - final ideas count:', finalResult.length);
+        
+        // Log the final status of each idea after merge
+        console.log('📊 Final ideas status after merge:');
+        finalResult.forEach(idea => {
+          console.log(`  - ${idea.title}: status="${idea.status}", updatedAt="${idea.updatedAt?.toISOString()}"`);
+        });
+        
+        return finalResult;
       });
     } catch (error) {
       console.error('💥 Exception loading ideas:', error);
@@ -441,35 +472,60 @@ function App() {
   };
 
   const updateIdeaStatus = async (id, status) => {
+    // Get the current idea before updating state
+    const currentIdea = ideas.find(i => i.id === id);
+    if (!currentIdea) {
+      console.error('❌ Idea not found for status update:', id);
+      return;
+    }
+    
+    console.log('🔄 Updating status for idea:', currentIdea.title, 'from', currentIdea.status, 'to', status);
+    
     // Update local state immediately for UI responsiveness
     setIdeas(ideas.map(idea =>
-      idea.id === id ? { ...idea, status } : idea
+      idea.id === id ? { ...idea, status, updatedAt: new Date() } : idea
     ));
     
     // Save to database
-    const idea = ideas.find(i => i.id === id);
-    if (idea) {
-      await saveIdeaToDatabase({ ...idea, status });
+    try {
+      await saveIdeaToDatabase({ ...currentIdea, status, updatedAt: new Date() });
+      console.log('✅ Status update saved successfully for:', currentIdea.title);
+    } catch (error) {
+      console.error('❌ Error saving status update:', error);
+      // Revert local state on database failure
+      setIdeas(ideas.map(idea =>
+        idea.id === id ? { ...idea, status: currentIdea.status } : idea
+      ));
+      throw error;
     }
   };
 
   const updateIdeaInState = async (id, updates) => {
     try {
+      console.log('🔄 updateIdeaInState called with:', { id, updates });
+      
       // Get the current idea state
       const currentIdea = ideas.find(i => i.id === id);
       if (!currentIdea) {
         console.error('Idea not found for update:', id);
         return;
       }
+      
+      console.log('🔄 Current idea before update:', currentIdea);
+      console.log('🔄 Updates to apply:', updates);
 
       // Check if the idea has been modified since we last loaded it
       const lastModified = currentIdea.updatedAt || currentIdea.createdAt;
       const now = new Date();
       
       // Update local state optimistically for UI responsiveness
-      setIdeas(ideas.map(idea =>
-        idea.id === id ? { ...idea, ...updates, updatedAt: now } : idea
-      ));
+      setIdeas(prevIdeas => {
+        const updatedIdeas = prevIdeas.map(idea =>
+          idea.id === id ? { ...idea, ...updates, updatedAt: now } : idea
+        );
+        console.log('🔄 Updated ideas state:', updatedIdeas.find(i => i.id === id));
+        return updatedIdeas;
+      });
       
       // Save to database with conflict detection
       try {
@@ -477,9 +533,14 @@ function App() {
         
         // If save was successful, update with the result from database
         if (result) {
-          setIdeas(ideas.map(idea =>
-            idea.id === id ? { ...idea, ...result, updatedAt: new Date(result.updated_at || result.updatedAt) } : idea
-          ));
+          console.log('🔄 Database save successful at', new Date().toISOString(), 'result:', result);
+          setIdeas(prevIdeas => {
+            const updatedIdeas = prevIdeas.map(idea =>
+              idea.id === id ? { ...idea, ...result, updatedAt: new Date(result.updated_at || result.updatedAt) } : idea
+            );
+            console.log('🔄 Final updated ideas state:', updatedIdeas.find(i => i.id === id));
+            return updatedIdeas;
+          });
         }
       } catch (error) {
         console.error('Failed to save idea update:', error);
@@ -516,8 +577,8 @@ function App() {
         status: 'idea',
         createdAt: new Date(),
         aiScore: 0,
-        liftLevel: undefined,
-        contentType: undefined
+        liftLevel: '',
+        contentType: ''
       };
       
       // Save to database first, then add to local state only after successful save
@@ -684,6 +745,7 @@ function App() {
       if (draggedIdeaIndex !== -1) {
         const [removedIdea] = newIdeas.splice(draggedIdeaIndex, 1);
         
+        const originalStatus = removedIdea.status;
         if (removedIdea.status !== targetStatus) {
           removedIdea.status = targetStatus;
         }
@@ -708,11 +770,13 @@ function App() {
         setIdeas(finalIdeas);
         
         // Save status changes to database
-        if (removedIdea.status !== targetStatus) {
+        if (originalStatus !== targetStatus) {
           try {
+            console.log('💾 Saving status change for idea:', removedIdea.title, 'from', originalStatus, 'to', targetStatus);
             await saveIdeaToDatabase(removedIdea);
+            console.log('✅ Status change saved successfully');
           } catch (error) {
-            console.error('Error saving status change:', error);
+            console.error('❌ Error saving status change:', error);
           }
         }
       }
@@ -1904,14 +1968,20 @@ function App() {
               <button 
                 className="regenerate-btn"
                 onClick={async () => {
+                  console.log('🔄 Refresh button clicked!');
                   if (selectedIdeaId) {
                     const idea = ideas.find(i => i.id === selectedIdeaId);
+                    console.log('🔄 Selected idea:', idea);
                     if (idea) {
                       try {
+                        console.log('🔄 Generating new suggestions...');
+                        // Clear current suggestions to show loading state
+                        setTitleSuggestions([]);
                         const newSuggestions = await generateScoredTitleSuggestions(idea);
+                        console.log('🔄 New suggestions generated:', newSuggestions);
                         setTitleSuggestions(newSuggestions);
                       } catch (error) {
-                        console.error('Error regenerating titles:', error);
+                        console.error('❌ Error regenerating titles:', error);
                       }
                     }
                   }

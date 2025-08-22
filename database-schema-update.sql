@@ -1,13 +1,20 @@
--- Database Schema Update: Remove unused columns
--- Run this in your Supabase SQL Editor
+-- Database Migration: Add lift_level and content_type columns
+-- Run this on your live Supabase database
 
--- Remove the lift_level and content_type columns from the ideas table
-ALTER TABLE public.ideas DROP COLUMN IF EXISTS lift_level;
-ALTER TABLE public.ideas DROP COLUMN IF EXISTS content_type;
+-- Add the missing columns to the existing ideas table
+ALTER TABLE public.ideas 
+ADD COLUMN IF NOT EXISTS lift_level TEXT DEFAULT 'Mid Lift',
+ADD COLUMN IF NOT EXISTS content_type TEXT DEFAULT 'Build/Tutorial';
 
--- Verify the updated table structure
-SELECT column_name, data_type, is_nullable 
+-- Update existing ideas to have the default values
+UPDATE public.ideas 
+SET 
+  lift_level = COALESCE(lift_level, 'Mid Lift'),
+  content_type = COALESCE(content_type, 'Build/Tutorial')
+WHERE lift_level IS NULL OR content_type IS NULL;
+
+-- Verify the columns were added
+SELECT column_name, data_type, is_nullable, column_default 
 FROM information_schema.columns 
 WHERE table_name = 'ideas' 
-AND table_schema = 'public'
-ORDER BY ordinal_position;
+AND column_name IN ('lift_level', 'content_type');
