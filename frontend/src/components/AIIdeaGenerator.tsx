@@ -81,7 +81,8 @@ const AIIdeaGenerator: React.FC<AIIdeaGeneratorProps> = ({
       setGeneratedIdeas(ideas);
     } catch (error) {
       console.error('❌ Error generating ideas:', error);
-      setError(`Failed to generate ideas: ${error.message}`);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+      setError(`Failed to generate ideas: ${errorMessage}`);
     } finally {
       setIsGenerating(false);
     }
