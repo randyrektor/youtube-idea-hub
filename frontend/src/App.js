@@ -124,6 +124,16 @@ function App() {
     if (isAuthenticated && user) {
       console.log('✅ Conditions met, loading ideas...');
       loadIdeasFromDatabase();
+      
+      // Set up periodic refresh for multiplayer sync (every 30 seconds)
+      const refreshInterval = setInterval(() => {
+        if (isAuthenticated && user) {
+          console.log('🔄 Periodic refresh for multiplayer sync...');
+          loadIdeasFromDatabase();
+        }
+      }, 30000);
+      
+      return () => clearInterval(refreshInterval);
     } else {
       console.log('❌ Conditions not met for loading ideas');
     }
@@ -152,13 +162,54 @@ function App() {
         tags: idea.tags || [],
         status: idea.status || 'idea',
         aiScore: idea.ai_score || 0,
+        liftLevel: idea.lift_level || 'Medium Lift',
+        contentType: idea.content_type || 'Video',
         createdAt: new Date(idea.created_at),
         updatedAt: new Date(idea.updated_at),
-
       }));
       
       console.log('✨ Transformed ideas:', transformedIdeas);
-      setIdeas(transformedIdeas);
+      
+      // Merge with existing ideas to handle conflicts gracefully
+      setIdeas(prevIdeas => {
+        const mergedIdeas = transformedIdeas.map(dbIdea => {
+          const existingIdea = prevIdeas.find(prev => prev.id === dbIdea.id);
+          
+          if (existingIdea) {
+            // Check if local changes are newer than database changes
+            const localTime = existingIdea.updatedAt?.getTime() || 0;
+            const dbTime = dbIdea.updatedAt?.getTime() || 0;
+            
+            if (localTime > dbTime && existingIdea.isScoring) {
+              // Keep local changes if they're newer and we're in the middle of scoring
+              console.log('🔄 Keeping local changes for idea:', dbIdea.title);
+              return existingIdea;
+            } else if (localTime > dbTime) {
+              // Local changes are newer, but check if they're significant
+              const hasSignificantChanges = 
+                existingIdea.title !== dbIdea.title ||
+                existingIdea.description !== dbIdea.description ||
+                existingIdea.status !== dbIdea.status ||
+                existingIdea.liftLevel !== dbIdea.liftLevel ||
+                existingIdea.contentType !== dbIdea.contentType;
+              
+              if (hasSignificantChanges) {
+                console.log('⚠️ Conflict detected for idea:', dbIdea.title, '- local changes preserved');
+                return existingIdea;
+              }
+            }
+          }
+          
+          return dbIdea;
+        });
+        
+        // Add any new ideas that don't exist in the database
+        const newIdeas = prevIdeas.filter(prev => 
+          !transformedIdeas.some(db => db.id === prev.id)
+        );
+        
+        return [...mergedIdeas, ...newIdeas];
+      });
     } catch (error) {
       console.error('💥 Exception loading ideas:', error);
     }
@@ -177,27 +228,38 @@ function App() {
         script: idea.script || '',
         tags: idea.tags || [],
         status: idea.status || 'idea',
-        ai_score: idea.aiScore || 0
-        // lift_level and content_type will be added after database schema update
+        ai_score: idea.aiScore || 0,
+        lift_level: idea.liftLevel || 'Medium Lift',
+        content_type: idea.contentType || 'Video',
+        updated_at: new Date().toISOString()
       };
       
       console.log('💾 Prepared ideaData:', ideaData);
 
       if (idea.id && idea.id.length > 20) { // Database UUID
-        // Update existing idea
+        // Update existing idea with conflict detection
         console.log('💾 Updating existing idea with ID:', idea.id);
-        console.log('💾 updateIdea function:', typeof updateIdea, updateIdea);
-        console.log('💾 Available functions:', { getIdeas, createIdea, updateIdea, deleteIdea });
         
-          const result = await updateIdea(idea.id, ideaData);
-          console.log('💾 updateIdea result:', result);
+        // Check if the idea has been modified by someone else
+        const existingIdea = ideas.find(i => i.id === idea.id);
+        if (existingIdea && existingIdea.updatedAt && idea.updatedAt) {
+          const existingTime = new Date(existingIdea.updatedAt).getTime();
+          const updateTime = new Date(idea.updatedAt).getTime();
           
-          if (!result) {
-            throw new Error('updateIdea returned undefined');
+          if (updateTime < existingTime) {
+            throw new Error('conflict: This idea was modified by someone else. Please refresh and try again.');
           }
-          
-          if (result.error) throw result.error;
-          return idea; // Return the updated idea
+        }
+        
+        const result = await updateIdea(idea.id, ideaData);
+        console.log('💾 updateIdea result:', result);
+        
+        if (!result) {
+          throw new Error('updateIdea returned undefined');
+        }
+        
+        if (result.error) throw result.error;
+        return result.data[0] || result; // Return the updated idea
       } else {
         // Create new idea
         console.log('💾 Creating new idea');
@@ -389,15 +451,53 @@ function App() {
   };
 
   const updateIdeaInState = async (id, updates) => {
-    // Update local state immediately for UI responsiveness
-    setIdeas(ideas.map(idea =>
-      idea.id === id ? { ...idea, ...updates } : idea
-    ));
-    
-    // Save to database
-    const idea = ideas.find(i => i.id === id);
-    if (idea) {
-      await saveIdeaToDatabase({ ...idea, ...updates });
+    try {
+      // Get the current idea state
+      const currentIdea = ideas.find(i => i.id === id);
+      if (!currentIdea) {
+        console.error('Idea not found for update:', id);
+        return;
+      }
+
+      // Check if the idea has been modified since we last loaded it
+      const lastModified = currentIdea.updatedAt || currentIdea.createdAt;
+      const now = new Date();
+      
+      // Update local state optimistically for UI responsiveness
+      setIdeas(ideas.map(idea =>
+        idea.id === id ? { ...idea, ...updates, updatedAt: now } : idea
+      ));
+      
+      // Save to database with conflict detection
+      try {
+        const result = await saveIdeaToDatabase({ ...currentIdea, ...updates, updatedAt: now });
+        
+        // If save was successful, update with the result from database
+        if (result) {
+          setIdeas(ideas.map(idea =>
+            idea.id === id ? { ...idea, ...result, updatedAt: new Date(result.updated_at || result.updatedAt) } : idea
+          ));
+        }
+      } catch (error) {
+        console.error('Failed to save idea update:', error);
+        
+        // Revert local state on database failure
+        setIdeas(ideas.map(idea =>
+          idea.id === id ? currentIdea : idea
+        ));
+        
+        // Show error to user
+        if (error.message.includes('conflict') || error.message.includes('stale')) {
+          alert('This idea was modified by someone else. Please refresh and try again.');
+        } else {
+          alert('Failed to save changes. Please try again.');
+        }
+        
+        throw error; // Re-throw so calling code can handle it
+      }
+    } catch (error) {
+      console.error('Error in updateIdeaInState:', error);
+      throw error;
     }
   };
 
@@ -412,7 +512,9 @@ function App() {
         tags: [],
         status: 'idea',
         createdAt: new Date(),
-        aiScore: 0
+        aiScore: 0,
+        liftLevel: 'Medium Lift',
+        contentType: 'Video'
       };
       
       // Save to database first, then add to local state only after successful save
@@ -1791,7 +1893,7 @@ function App() {
                 }}
                 title="Generate more title suggestions"
               >
-                🔄
+                ↻
               </button>
             )}
           </div>
@@ -2506,9 +2608,7 @@ function IdeaCard({ idea, onStatusChange, onUpdateIdea, onScoreSingleIdea, onGen
             onClick={(e) => {
               e.stopPropagation();
               setShowDeleteOption(false);
-              if (window.confirm(`Are you sure you want to delete "${idea.title}"?`)) {
-                onDeleteIdea(idea.id);
-              }
+              onDeleteIdea(idea.id);
             }}
             title="Delete idea"
           >
