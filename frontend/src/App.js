@@ -281,99 +281,97 @@ function App() {
       ...idea,
       createdAt: new Date(),
       status: 'idea',
-      
       tags: idea.tags || []
     }));
     
-    // Add to local state first for immediate UI feedback
-    setIdeas(prevIdeas => [...prevIdeas, ...newIdeas]);
-    
-    // Save new ideas to database
+    // Save new ideas to database first, then add to local state only after successful save
+    const savedIdeas = [];
     for (const idea of newIdeas) {
       try {
         const savedIdea = await saveIdeaToDatabase(idea);
         if (savedIdea) {
-          // Update local state with database ID
-          setIdeas(prevIdeas =>
-            prevIdeas.map(existingIdea =>
-              existingIdea.title === idea.title && !existingIdea.id?.startsWith('db_')
-                ? { ...existingIdea, id: savedIdea.id }
-                : existingIdea
-            )
-          );
+          // Update the idea with the database ID
+          const updatedIdea = { ...idea, id: savedIdea.id };
+          savedIdeas.push(updatedIdea);
         }
       } catch (error) {
         console.error('Error saving bulk imported idea:', error);
+        // Don't add to savedIdeas if database save failed
       }
     }
     
-    try {
-      // AI scoring
-      const { isAIConfigured } = await import('./config/ai');
-      if (isAIConfigured()) {
-        const { default: aiService } = await import('./services/aiService');
-        
-        setIdeas(prevIdeas =>
-          prevIdeas.map(idea =>
-            newIdeas.some(newIdea => newIdea.title === idea.title)
-              ? { ...idea, isScoring: true }
-              : idea
-          )
-        );
-
-        if (newIdeas.length > 1) {
-          const scoredIdeas = await aiService.fastBatchScore(newIdeas);
-          setIdeas(prevIdeas =>
-            prevIdeas.map(idea => {
-              const scoredIdea = scoredIdeas.find(scored => scored.title === idea.title);
-              if (scoredIdea) {
-                const updatedIdea = {
-                  ...idea,
-                  aiScore: scoredIdea.aiScore,
-                  isScoring: false,
-                  analyzedAt: scoredIdea.analyzedAt
-                };
-                // Save updated score to database
-                saveIdeaToDatabase(updatedIdea);
-                return updatedIdea;
-              }
-              return idea;
-            })
-          );
-        } else {
-          const analysis = await aiService.analyzeIdea(newIdeas[0], ideas);
-          const updatedIdea = {
-            ...newIdeas[0],
-            aiScore: analysis.overallScore,
-            isScoring: false,
-            analyzedAt: new Date().toISOString()
-          };
+    // Only add successfully saved ideas to local state
+    if (savedIdeas.length > 0) {
+      setIdeas(prevIdeas => [...prevIdeas, ...savedIdeas]);
+      
+      try {
+        // AI scoring
+        const { isAIConfigured } = await import('./config/ai');
+        if (isAIConfigured()) {
+          const { default: aiService } = await import('./services/aiService');
           
           setIdeas(prevIdeas =>
             prevIdeas.map(idea =>
-              idea.title === newIdeas[0].title
-                ? updatedIdea
+              savedIdeas.some(savedIdea => savedIdea.id === idea.id)
+                ? { ...idea, isScoring: true }
                 : idea
             )
           );
-          
-          // Save updated score to database
-          try {
-            await saveIdeaToDatabase(updatedIdea);
-          } catch (error) {
-            console.error('Error saving AI score to database:', error);
+
+          if (savedIdeas.length > 1) {
+            const scoredIdeas = await aiService.fastBatchScore(savedIdeas);
+            setIdeas(prevIdeas =>
+              prevIdeas.map(idea => {
+                const scoredIdea = scoredIdeas.find(scored => scored.title === idea.title);
+                if (scoredIdea) {
+                  const updatedIdea = {
+                    ...idea,
+                    aiScore: scoredIdea.aiScore,
+                    isScoring: false,
+                    analyzedAt: scoredIdea.analyzedAt
+                  };
+                  // Save updated score to database
+                  saveIdeaToDatabase(updatedIdea);
+                  return updatedIdea;
+                }
+                return idea;
+              })
+            );
+          } else {
+            const analysis = await aiService.analyzeIdea(savedIdeas[0], ideas);
+            const updatedIdea = {
+              ...savedIdeas[0],
+              aiScore: analysis.overallScore,
+              isScoring: false,
+              analyzedAt: new Date().toISOString()
+            };
+            
+            setIdeas(prevIdeas =>
+              prevIdeas.map(idea =>
+                idea.id === savedIdeas[0].id
+                  ? updatedIdea
+                  : idea
+            )
+            );
+            
+            // Save updated score to database
+            try {
+              await saveIdeaToDatabase(updatedIdea);
+            } catch (error) {
+              console.error('Error saving AI score to database:', error);
+            }
           }
         }
+      } catch (error) {
+        setIdeas(prevIdeas =>
+          prevIdeas.map(idea =>
+            savedIdeas.some(savedIdea => savedIdea.id === idea.id)
+              ? { ...idea, isScoring: false }
+              : idea
+          )
+        );
+        console.error('Error adding idea:', error);
       }
-    } catch (error) {
-      setIdeas(prevIdeas =>
-        prevIdeas.map(idea =>
-          newIdeas.some(newIdea => newIdea.title === idea.title)
-            ? { ...idea, isScoring: false }
-            : idea
-        )
-      );
-      console.error('Error adding idea:', error);
     }
   };
 
@@ -414,15 +412,14 @@ function App() {
         tags: [],
         status: 'idea',
         createdAt: new Date(),
-
         aiScore: 0
       };
       
-      // Save to database first
+      // Save to database first, then add to local state only after successful save
       try {
         const savedIdea = await saveIdeaToDatabase(newIdea);
         if (savedIdea) {
-          // Add to local state with the database ID
+          // Only add to local state after successful database save
           const ideaWithId = { ...newIdea, id: savedIdea.id };
           setIdeas(prevIdeas => [...prevIdeas, ideaWithId]);
           
@@ -431,16 +428,18 @@ function App() {
             console.log('🚀 Triggering AI scoring for new idea:', savedIdea.title);
             scoreSingleIdeaWithAI(savedIdea.id);
           }
+          
+          // Clear form and close modal only after successful save
+          setQuickAddTitle('');
+          setQuickAddDescription('');
+          setShowQuickAdd(false);
         }
       } catch (error) {
         console.error('Error saving idea:', error);
-        // Only add to local state if database save failed
-        setIdeas(prevIdeas => [...prevIdeas, newIdea]);
+        // Don't add to local state if database save failed
+        // Show error to user instead
+        alert('Failed to save idea. Please try again.');
       }
-      
-      setQuickAddTitle('');
-      setQuickAddDescription('');
-      setShowQuickAdd(false);
     }
   };
 
@@ -1774,6 +1773,27 @@ function App() {
         >
           <div className={`flyout-header ${titleSuggestions.length === 0 ? 'loading' : ''}`}>
             <span>Suggestions</span>
+            {titleSuggestions.length > 0 && (
+              <button 
+                className="regenerate-btn"
+                onClick={async () => {
+                  if (selectedIdeaId) {
+                    const idea = ideas.find(i => i.id === selectedIdeaId);
+                    if (idea) {
+                      try {
+                        const newSuggestions = await generateScoredTitleSuggestions(idea);
+                        setTitleSuggestions(newSuggestions);
+                      } catch (error) {
+                        console.error('Error regenerating titles:', error);
+                      }
+                    }
+                  }
+                }}
+                title="Generate more title suggestions"
+              >
+                🔄
+              </button>
+            )}
           </div>
           <div className="flyout-list">
             {titleSuggestions.length === 0 ? (
@@ -1796,11 +1816,19 @@ function App() {
                   <button
                     key={i}
                     className={`flyout-card ${isOptimistic ? 'optimistic-suggestion' : ''}`}
-                    onClick={() => {
+                    onClick={async () => {
                       if (selectedIdeaId) {
-                        updateIdeaTitle(selectedIdeaId, title, score);
+                        try {
+                          // Update the title first
+                          await updateIdeaTitle(selectedIdeaId, title, score);
+                          // Only close the flyout after successful update
+                          closeSuggestionsFlyout();
+                        } catch (error) {
+                          console.error('Error updating title:', error);
+                          alert('Failed to update title. Please try again.');
+                          // Don't close the flyout if update failed
+                        }
                       }
-                      closeSuggestionsFlyout();
                     }}
                   >
                     <span className="sparkle">✦</span>

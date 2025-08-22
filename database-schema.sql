@@ -29,7 +29,9 @@ CREATE TABLE IF NOT EXISTS public.ideas (
   lift_level TEXT DEFAULT 'Medium Lift',
   content_type TEXT DEFAULT 'Video',
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  -- Prevent duplicate titles for the same user
+  UNIQUE(user_id, title)
 );
 
 -- User preferences table

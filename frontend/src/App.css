@@ -1744,18 +1744,16 @@ body.theme-dark .title-suggestions-flyout {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
   font-weight: 600;
+  font-size: 0.9rem;
   color: #2c3e50;
-  padding: 4px 6px 8px 6px;
-  width: 100%;
-  max-width: 100%;
-  box-sizing: border-box;
-  min-height: 32px;
 }
 
-/* Dark theme header */
 body.theme-dark .flyout-header {
   color: #ffffff;
+  border-bottom-color: rgba(255, 255, 255, 0.1);
 }
 
 .flyout-header .flyout-context {
@@ -3474,4 +3472,38 @@ body.theme-dark .delete-action-btn:hover {
   to {
     opacity: 1;
   }
+}
+
+.regenerate-btn {
+  background: rgba(102, 126, 234, 0.1);
+  border: 1px solid rgba(102, 126, 234, 0.3);
+  color: #667eea;
+  border-radius: 50%;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 0.9rem;
+  flex-shrink: 0;
+  margin-left: 0.5rem;
+}
+
+.regenerate-btn:hover {
+  background: rgba(102, 126, 234, 0.2);
+  border-color: rgba(102, 126, 234, 0.5);
+  transform: scale(1.05);
+}
+
+body.theme-dark .regenerate-btn {
+  background: rgba(139, 157, 195, 0.1);
+  border-color: rgba(139, 157, 195, 0.3);
+  color: #8b9dc3;
+}
+
+body.theme-dark .regenerate-btn:hover {
+  background: rgba(139, 157, 195, 0.2);
+  border-color: rgba(139, 157, 195, 0.5);
 }
