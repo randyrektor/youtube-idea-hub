@@ -3536,6 +3536,41 @@ body.theme-dark .regenerate-btn:hover {
   margin-left: 1rem;
 }
 
+.team-indicator {
+  display: flex;
+  align-items: center;
+}
+
+.team-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.25rem 0.75rem;
+  background: linear-gradient(135deg, #10b981, #059669);
+  color: white;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
+  transition: all 0.2s ease;
+}
+
+.team-badge:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+}
+
+body.theme-dark .team-badge {
+  background: linear-gradient(135deg, #10b981, #059669);
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.4);
+}
+
+body.theme-dark .team-badge:hover {
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.5);
+}
+
 .current-user-badge {
   display: flex;
   align-items: center;

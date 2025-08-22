@@ -14,9 +14,7 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
     autoRefreshToken: true,
     persistSession: true,
-    detectSessionInUrl: true,
-    storage: window.localStorage,
-    storageKey: 'youtube-idea-hub-auth'
+    detectSessionInUrl: true
   }
 });
 
@@ -67,11 +65,12 @@ export const onAuthStateChange = (callback) => {
 };
 
 // Database helper functions
-export const getIdeas = async (userId) => {
+export const getIdeas = async (userId = null) => {
+  // For team database, load all ideas regardless of user_id
+  // userId parameter kept for backward compatibility but not used for filtering
   const { data, error } = await supabase
     .from('ideas')
     .select('*')
-    .eq('user_id', userId)
     .order('created_at', { ascending: false });
   return { data, error };
 };
@@ -82,9 +81,15 @@ export const createIdea = async (idea) => {
   console.log('🔧 Supabase URL:', supabaseUrl);
   
   try {
+    // For team database, always include user_id for attribution but don't restrict access
+    const ideaWithUser = {
+      ...idea,
+      user_id: idea.user_id || 'team' // Fallback if no user_id provided
+    };
+    
     const result = await supabase
       .from('ideas')
-      .insert([idea])
+      .insert([ideaWithUser])
       .select();
     
     console.log('🔧 createIdea raw result:', result);

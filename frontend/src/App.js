@@ -198,11 +198,11 @@ function App() {
     };
   }, []);
 
-  // Load ideas from database
+  // Load ideas from team database
   const loadIdeasFromDatabase = async () => {
     try {
-      console.log('🔄 Loading ideas from database for user:', user.id);
-      const { data: ideas, error } = await getIdeas(user.id);
+      console.log('🔄 Loading ideas from team database (all users)');
+      const { data: ideas, error } = await getIdeas();
       
       if (error) {
         console.error('❌ Error loading ideas:', error);
@@ -293,7 +293,7 @@ function App() {
     }
   };
 
-  // Save idea to database
+  // Save idea to team database (all users can see and edit all ideas)
   const saveIdeaToDatabase = async (idea) => {
     try {
       console.log('💾 saveIdeaToDatabase called with idea:', idea);
@@ -1354,6 +1354,9 @@ function App() {
           <h1> YouTube Idea Hub</h1>
           {isAuthenticated && user && (
             <div className="collaborative-users">
+              <div className="team-indicator">
+                <span className="team-badge">👥 Team Workspace</span>
+              </div>
               <div className="current-user-badge">
                 <div className="user-avatar-small">
                   {user?.user_metadata?.avatar_url ? (
