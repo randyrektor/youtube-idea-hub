@@ -822,4 +822,4 @@ app.get('/settings', (req, res) => {
 app.listen(PORT, () => {
   console.log(`🚀 Backend server running on port ${PORT}`);
   console.log(`�� Frontend should be running on http://localhost:3000`);
-});
+});// Backend updated to trigger deployment
