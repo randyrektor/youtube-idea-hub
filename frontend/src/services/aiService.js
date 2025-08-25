@@ -1,6 +1,11 @@
 import { AI_CONFIG } from '../config/ai';
 import { getSessionToken } from '../config/supabase';
 
+// Helper function to get backend URL with fallback
+const getBackendUrl = () => {
+  return process.env.REACT_APP_API_URL || localStorage.getItem('youtube-idea-hub-backend-url') || 'http://localhost:3001';
+};
+
 const getAuthHeaders = async () => {
   const token = await getSessionToken();
   return {
@@ -82,7 +87,8 @@ class AIService {
     console.log('🚀 Using backend for title generation...');
     
     try {
-      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/generate-titles`, {
+      const backendUrl = getBackendUrl();
+      const response = await fetch(`${backendUrl}/api/generate-titles`, {
         method: 'POST',
         headers: await getAuthHeaders(),
         body: JSON.stringify({
@@ -120,7 +126,8 @@ class AIService {
     
     try {
       // Use the backend scoring endpoint for single idea analysis
-      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/score-titles`, {
+      const backendUrl = getBackendUrl();
+      const response = await fetch(`${backendUrl}/api/score-titles`, {
         method: 'POST',
         headers: await getAuthHeaders(),
         body: JSON.stringify({
@@ -191,7 +198,9 @@ class AIService {
     
     try {
       // Use the new backend idea generation endpoint
-      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/generate-ideas`, {
+      const backendUrl = getBackendUrl();
+      console.log('🔧 Using backend URL:', backendUrl);
+      const response = await fetch(`${backendUrl}/api/generate-ideas`, {
         method: 'POST',
         headers: await getAuthHeaders(),
         body: JSON.stringify({
@@ -254,7 +263,8 @@ ${limitedIdeas.map((idea, index) => `${index + 1}) ${idea.title}`).join('\n')}`;
     try {
       console.log('🚀 Using backend for AI scoring...');
       
-      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/score-titles`, {
+      const backendUrl = getBackendUrl();
+      const response = await fetch(`${backendUrl}/api/score-titles`, {
         method: 'POST',
         headers: await getAuthHeaders(),
         body: JSON.stringify({
@@ -582,7 +592,8 @@ ${limitedIdeas.map((idea, index) => `${index + 1}) ${idea.title}`).join('\n')}`;
       const titles = ideas.map(idea => idea.title);
       const channelSummary = `Syntax.fm - Web Development/JavaScript with 1.2M+ views on JavaScript tutorials, React development, and web dev tips`;
       
-      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/score-titles`, {
+      const backendUrl = getBackendUrl();
+      const response = await fetch(`${backendUrl}/api/score-titles`, {
         method: 'POST',
         headers: await getAuthHeaders(),
         body: JSON.stringify({

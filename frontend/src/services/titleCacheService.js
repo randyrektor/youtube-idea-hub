@@ -2,6 +2,11 @@
 import { TITLE_GENERATION_CONFIG } from '../config/titleGenerationConfig';
 import { getSessionToken } from '../config/supabase';
 
+// Helper function to get backend URL with fallback
+const getBackendUrl = () => {
+  return process.env.REACT_APP_API_URL || localStorage.getItem('youtube-idea-hub-backend-url') || 'http://localhost:3001';
+};
+
 // Simple LRU cache implementation
 class LRUCache {
   constructor(maxSize = 100) {
@@ -87,13 +92,14 @@ export async function getAlternates(title, context = "") {
   console.log(`🔄 Cache miss for: "${title}", fetching from API...`);
   
   try {
-          console.log(`🌐 Making API call to: ${process.env.REACT_APP_API_URL}/api/alt-titles`);
+          const backendUrl = getBackendUrl();
+          console.log(`🌐 Making API call to: ${backendUrl}/api/alt-titles`);
     console.log(`📤 Request payload:`, { title, context });
     
     let response;
     try {
       // Try backend first
-      response = await fetch(`${process.env.REACT_APP_API_URL}/api/alt-titles`, {
+      response = await fetch(`${backendUrl}/api/alt-titles`, {
         method: "POST",
         headers: await getAuthHeaders(),
         body: JSON.stringify({ title, context })
@@ -150,7 +156,8 @@ export async function prefetchTitlesForIdeas(ideas, maxPrefetch = TITLE_GENERATI
 
   // Check if backend is available first
   try {
-    const healthCheck = await fetch(`${process.env.REACT_APP_API_URL}/health`);
+    const backendUrl = getBackendUrl();
+    const healthCheck = await fetch(`${backendUrl}/health`);
     if (!healthCheck.ok) {
       console.log('⚠️ Backend not available, skipping prefetch');
       lastBackendError = now;

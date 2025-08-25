@@ -57,20 +57,29 @@ export const AI_CONFIG = {
 export const isAIConfigured = () => {
   try {
     console.log('🚨 isAIConfigured() called');
-    const apiKey = getOpenAIKey();
-    if (apiKey) {
-      console.log('🚨 Local API key found:', !!apiKey, 'Length:', apiKey ? apiKey.length : 0);
+    
+    // Check if we have a local API key
+    const localKey = localStorage.getItem('youtube-idea-hub-openai-key');
+    if (localKey) {
+      console.log('🚨 Local API key found:', !!localKey, 'Length:', localKey ? localKey.length : 0);
       return true;
     }
     
-    // If no local key, check if backend is available with AI capabilities
-    console.log('🚨 No local API key, but allowing AI features (backend will handle AI calls)');
-    return true; // Allow AI features to run, backend will handle the actual AI calls
+    // Check if backend URL is configured (either from env or localStorage fallback)
+    const backendUrl = process.env.REACT_APP_API_URL || localStorage.getItem('youtube-idea-hub-backend-url');
+    if (backendUrl) {
+      console.log('🚨 Backend URL configured:', backendUrl);
+      console.log('🚨 Allowing AI features (backend will handle AI calls)');
+      return true; // Allow AI features to run, backend will handle the actual AI calls
+    }
+    
+    // If no local key and no backend URL, AI is not configured
+    console.log('🚨 No local API key and no backend URL configured');
+    return false;
     
   } catch (error) {
     console.log('🚨 isAIConfigured() error:', error.message);
-    // Even if there's an error, allow AI features to run (backend will handle it)
-    return true;
+    return false;
   }
 };
 
