@@ -123,7 +123,7 @@ app.get('/health', (req, res) => {
     timestamp: new Date().toISOString(),
     endpoints: ['/api/ideas', '/api/score-titles', '/api/generate-titles', '/api/alt-titles', '/api/settings'],
     hasApiKey: !!process.env.OPENAI_API_KEY,
-    deployment: 'FORCE_DEPLOY_' + Date.now() // Force Render to see this as new code
+    deployment: 'FORCE_DEPLOY_' + Date.now() + '_TOKEN_FIX' // Force Render to see this as new code
   });
 });
 
