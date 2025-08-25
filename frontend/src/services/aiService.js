@@ -241,7 +241,39 @@ class AIService {
       } else {
         // Handle 401 authentication errors
         if (response.status === 401) {
-          console.log('🔐 Authentication failed (401), forcing re-authentication...');
+          console.log('🔐 Authentication failed (401) - token may be expired or invalid');
+          console.log('🔐 Attempting to refresh token and retry...');
+          
+          // Try to refresh the token instead of immediately signing out
+          try {
+            const { supabase } = await import('../config/supabase');
+            const { data: { session }, error } = await supabase.auth.refreshSession();
+            
+            if (session && !error) {
+              console.log('✅ Token refreshed successfully, retrying request...');
+              // Retry the request with the new token
+              const retryResponse = await fetch(`${backendUrl}/api/generate-ideas`, {
+                method: 'POST',
+                headers: await getAuthHeaders(),
+                body: JSON.stringify({
+                  ideaPrompt,
+                  channelFocus,
+                  count
+                })
+              });
+              
+              if (retryResponse.ok) {
+                const result = await retryResponse.json();
+                console.log('✅ Retry successful!');
+                return result.ideas || [];
+              }
+            }
+          } catch (refreshError) {
+            console.log('⚠️ Token refresh failed:', refreshError.message);
+          }
+          
+          // If refresh failed, then force re-authentication
+          console.log('🔐 Token refresh failed, forcing re-authentication...');
           await forceReAuth();
           throw new Error('Authentication expired. Please sign in again.');
         }
