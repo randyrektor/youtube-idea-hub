@@ -1,7 +1,7 @@
 {
   "name": "youtube-idea-hub-backend",
   "version": "1.0.0",
-  "description": "Backend API for YouTube Idea Hub",
+  "description": "Backend for YouTube Idea Hub - Force redeploy with Supabase client fix",
   "main": "src/index.js",
   "scripts": {
     "start": "node src/index.js",
