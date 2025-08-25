@@ -32,10 +32,21 @@ const getUserFromToken = async (token) => {
 // Helper function to verify JWT token
 const verifyToken = async (token) => {
   try {
+    console.log('🔍 Verifying token:', token.substring(0, 20) + '...');
+    console.log('🔍 Supabase URL:', supabaseUrl);
+    console.log('🔍 Service key present:', !!supabaseServiceKey);
+    
     const { data: { user }, error } = await supabase.auth.getUser(token);
-    if (error) throw error;
+    
+    if (error) {
+      console.log('❌ Token verification error:', error.message);
+      throw error;
+    }
+    
+    console.log('✅ Token verified successfully for user:', user?.id);
     return { valid: true, user };
   } catch (error) {
+    console.log('❌ Token verification failed:', error.message);
     return { valid: false, user: null };
   }
 };
