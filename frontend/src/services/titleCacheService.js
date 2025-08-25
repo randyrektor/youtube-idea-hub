@@ -73,10 +73,18 @@ const getAuthHeaders = async () => {
       'Content-Type': 'application/json'
     };
     
-    // Validate token format and length
+    // Validate token format and length, and clean any line breaks
     if (token && typeof token === 'string' && token.length > 20) {
-      headers['Authorization'] = `Bearer ${token}`;
-      console.log('🔧 Auth headers: WITH token (length:', token.length, ')');
+      // Clean the token by removing any line breaks, carriage returns, and extra whitespace
+      const cleanToken = token.replace(/[\r\n\s]+/g, '').trim();
+      
+      if (cleanToken.length > 20) {
+        headers['Authorization'] = `Bearer ${cleanToken}`;
+        console.log('🔧 Auth headers: WITH token (length:', cleanToken.length, ')');
+        console.log('🔧 Token cleaned - removed line breaks and whitespace');
+      } else {
+        console.log('🔧 Auth headers: NO token (token too short after cleaning)');
+      }
     } else {
       console.log('🔧 Auth headers: NO token (invalid/expired token)');
     }
