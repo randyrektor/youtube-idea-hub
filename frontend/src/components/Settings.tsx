@@ -73,6 +73,8 @@ const Settings: React.FC<SettingsProps> = ({ isOpen, onClose }) => {
                 AI features are now configured and managed securely on the backend server.
               </p>
               
+
+              
               <div className="security-notice">
                 <h4>🔒 Security Notice</h4>
                 <p>Your OpenAI API key is securely stored on the backend server and is not accessible from the frontend. This ensures your API key remains private and secure.</p>
