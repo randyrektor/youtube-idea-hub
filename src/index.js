@@ -829,5 +829,5 @@ app.get('/settings', (req, res) => {
 // Start server
 app.listen(PORT, () => {
   console.log(`🚀 Backend server running on port ${PORT}`);
-  console.log(`�� Frontend should be running on http://localhost:3000`);
+  console.log(`🚀 DEPLOYMENT FORCE: This is the NEW code with Supabase client fix - ${new Date().toISOString()}`);
 });// Backend updated to trigger deployment
