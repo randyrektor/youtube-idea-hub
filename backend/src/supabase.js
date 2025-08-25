@@ -3,14 +3,23 @@ const { createClient } = require('@supabase/supabase-js');
 // Supabase configuration
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+const supabaseAnonKey = process.env.SUPABASE_ANON_KEY;
 
-if (!supabaseUrl || !supabaseServiceKey) {
+if (!supabaseUrl || !supabaseServiceKey || !supabaseAnonKey) {
   console.warn('⚠️  WARNING: Supabase environment variables not configured');
-  console.warn('   Set SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY in your .env file');
+  console.warn('   Set SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, and SUPABASE_ANON_KEY in your .env file');
 }
 
-// Create Supabase client with service role key for backend operations
-const supabase = createClient(supabaseUrl, supabaseServiceKey, {
+// Create Supabase client with anon key for user token verification
+const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+  auth: {
+    autoRefreshToken: false,
+    persistSession: false
+  }
+});
+
+// Create separate client with service role key for admin operations
+const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey, {
   auth: {
     autoRefreshToken: false,
     persistSession: false
@@ -53,6 +62,7 @@ const verifyToken = async (token) => {
 
 module.exports = {
   supabase,
+  supabaseAdmin,
   getUserFromToken,
   verifyToken
 };
