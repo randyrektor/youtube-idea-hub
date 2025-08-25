@@ -7,6 +7,5 @@ services:
     startCommand: node src/index.js
     autoDeploy: true
     branch: main
-    rootDir: ./
     # Force redeploy to pick up Supabase client fix and new OpenAI API key
     # DEPLOYMENT FORCE: This comment was added to ensure Render recognizes the configuration
