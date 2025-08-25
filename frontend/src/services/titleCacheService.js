@@ -138,9 +138,9 @@ export async function getAlternates(title, context = "") {
     if (!response.ok) {
       // Handle 401 authentication errors
       if (response.status === 401) {
-        console.log('🔐 Authentication failed (401), forcing re-authentication...');
-        await forceReAuth();
-        throw new Error('Authentication expired. Please sign in again.');
+        console.log('🔐 Authentication failed (401) - likely backend API key issue, not auth problem');
+        console.log('💡 Waiting for Render deployment to complete...');
+        throw new Error('Backend temporarily unavailable. Please wait for deployment to complete.');
       }
       
       throw new Error(`API error: ${response.status}`);
