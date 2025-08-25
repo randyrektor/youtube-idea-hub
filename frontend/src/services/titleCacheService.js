@@ -1,6 +1,6 @@
 // Title Cache Service - Prefetch and cache title suggestions for instant feel
 import { TITLE_GENERATION_CONFIG } from '../config/titleGenerationConfig';
-import { getSessionToken } from '../config/supabase';
+import { getSessionToken, forceReAuth } from '../config/supabase';
 
 // Helper function to get backend URL with fallback
 const getBackendUrl = () => {
@@ -136,6 +136,13 @@ export async function getAlternates(title, context = "") {
     console.log(`📥 Response headers:`, Object.fromEntries(response.headers.entries()));
 
     if (!response.ok) {
+      // Handle 401 authentication errors
+      if (response.status === 401) {
+        console.log('🔐 Authentication failed (401), forcing re-authentication...');
+        await forceReAuth();
+        throw new Error('Authentication expired. Please sign in again.');
+      }
+      
       throw new Error(`API error: ${response.status}`);
     }
 

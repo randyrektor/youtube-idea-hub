@@ -64,12 +64,63 @@ export const getCurrentUser = async () => {
 };
 
 export const getSessionToken = async () => {
-  const { data: { session }, error } = await supabase.auth.getSession();
-  return session?.access_token || null;
+  try {
+    const { data: { session }, error } = await supabase.auth.getSession();
+    
+    if (error) {
+      console.log('⚠️ Session error:', error.message);
+      return null;
+    }
+    
+    if (!session) {
+      console.log('🔧 No active session found');
+      return null;
+    }
+    
+    // Check if token is expired (with 5 minute buffer)
+    const expiresAt = session.expires_at;
+    const now = Math.floor(Date.now() / 1000);
+    const buffer = 5 * 60; // 5 minutes
+    
+    if (expiresAt && (expiresAt - now) < buffer) {
+      console.log('🔄 Token expired, attempting refresh...');
+      const { data: { session: refreshedSession }, error: refreshError } = await supabase.auth.refreshSession();
+      
+      if (refreshError) {
+        console.log('❌ Token refresh failed:', refreshError.message);
+        return null;
+      }
+      
+      if (refreshedSession) {
+        console.log('✅ Token refreshed successfully');
+        return refreshedSession.access_token;
+      }
+    }
+    
+    return session.access_token;
+  } catch (error) {
+    console.log('⚠️ Error getting session token:', error.message);
+    return null;
+  }
 };
 
 export const onAuthStateChange = (callback) => {
   return supabase.auth.onAuthStateChange(callback);
+};
+
+// Force re-authentication when tokens are invalid
+export const forceReAuth = async () => {
+  try {
+    console.log('🔄 Forcing re-authentication...');
+    const { error } = await supabase.auth.signOut();
+    if (error) {
+      console.log('⚠️ Error signing out:', error.message);
+    }
+    return { success: !error };
+  } catch (error) {
+    console.log('⚠️ Error in forceReAuth:', error.message);
+    return { success: false };
+  }
 };
 
 // Database helper functions

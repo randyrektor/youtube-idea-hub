@@ -1,5 +1,5 @@
 import { AI_CONFIG } from '../config/ai';
-import { getSessionToken } from '../config/supabase';
+import { getSessionToken, forceReAuth } from '../config/supabase';
 
 // Helper function to get backend URL with fallback
 const getBackendUrl = () => {
@@ -230,7 +230,14 @@ class AIService {
         const result = await response.json();
         console.log('✅ Backend idea generation successful!');
         return result.ideas || [];
-            } else {
+      } else {
+        // Handle 401 authentication errors
+        if (response.status === 401) {
+          console.log('🔐 Authentication failed (401), forcing re-authentication...');
+          await forceReAuth();
+          throw new Error('Authentication expired. Please sign in again.');
+        }
+        
         throw new Error(`Backend failed: ${response.status}`);
       }
       
