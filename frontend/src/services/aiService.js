@@ -13,12 +13,12 @@ const getAuthHeaders = async () => {
       'Content-Type': 'application/json'
     };
     
-    // Only add Authorization header if we have a valid token
-    if (token) {
+    // Validate token format and length
+    if (token && typeof token === 'string' && token.length > 20) {
       headers['Authorization'] = `Bearer ${token}`;
-      console.log('🔧 Auth headers: WITH token');
+      console.log('🔧 Auth headers: WITH token (length:', token.length, ')');
     } else {
-      console.log('🔧 Auth headers: NO token (sending without authentication)');
+      console.log('🔧 Auth headers: NO token (invalid/expired token)');
     }
     
     return headers;
