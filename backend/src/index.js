@@ -114,9 +114,9 @@ app.put('/api/user/preferences', authenticateUser, async (req, res) => {
 });
 
 // Routes
-// Force redeploy - updated OpenAI API key and Supabase client fix
+// Force redeploy - updated OpenAI API key, Supabase client fix, and improved error handling
 app.get('/health', (req, res) => {
-  // Health check endpoint - updated to trigger Render deployment
+  // Health check endpoint - updated to trigger Render deployment with latest fixes
   res.json({
     status: 'ok',
     timestamp: new Date().toISOString(),
