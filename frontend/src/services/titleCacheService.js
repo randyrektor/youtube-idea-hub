@@ -67,11 +67,25 @@ function debounce(func, wait) {
 }
 
 const getAuthHeaders = async () => {
-  const token = await getSessionToken();
-  return {
-    'Content-Type': 'application/json',
-    ...(token && { 'Authorization': `Bearer ${token}` })
-  };
+  try {
+    const token = await getSessionToken();
+    const headers = {
+      'Content-Type': 'application/json'
+    };
+    
+    // Only add Authorization header if we have a valid token
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+    
+    console.log('🔧 Auth headers:', { hasToken: !!token, headers });
+    return headers;
+  } catch (error) {
+    console.log('⚠️ Error getting auth headers, proceeding without authentication:', error.message);
+    return {
+      'Content-Type': 'application/json'
+    };
+  }
 };
 
 // Get cached alternates or fetch from API
