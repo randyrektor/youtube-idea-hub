@@ -115,13 +115,15 @@ app.put('/api/user/preferences', authenticateUser, async (req, res) => {
 
 // Routes
 // Force redeploy - updated OpenAI API key, Supabase client fix, and improved error handling
+// DEPLOYMENT FORCE: This comment was added to ensure Render deploys the latest code
 app.get('/health', (req, res) => {
   // Health check endpoint - updated to trigger Render deployment with latest fixes
   res.json({
     status: 'ok',
     timestamp: new Date().toISOString(),
     endpoints: ['/api/ideas', '/api/score-titles', '/api/generate-titles', '/api/alt-titles', '/api/settings'],
-    hasApiKey: !!getOpenAIAPIKey()
+    hasApiKey: !!process.env.OPENAI_API_KEY,
+    deployment: 'FORCE_DEPLOY_' + Date.now() // Force Render to see this as new code
   });
 });
 
