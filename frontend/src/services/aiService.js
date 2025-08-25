@@ -16,9 +16,11 @@ const getAuthHeaders = async () => {
     // Only add Authorization header if we have a valid token
     if (token) {
       headers['Authorization'] = `Bearer ${token}`;
+      console.log('🔧 Auth headers: WITH token');
+    } else {
+      console.log('🔧 Auth headers: NO token (sending without authentication)');
     }
     
-    console.log('🔧 Auth headers:', { hasToken: !!token, headers });
     return headers;
   } catch (error) {
     console.log('⚠️ Error getting auth headers, proceeding without authentication:', error.message);
