@@ -8,3 +8,4 @@ services:
     autoDeploy: true
     branch: main
     # Force redeploy to pick up Supabase client fix and new OpenAI API key
+    # DEPLOYMENT FORCE: This comment was added to ensure Render recognizes the configuration
