@@ -7,5 +7,4 @@ services:
     startCommand: node src/index.js
     autoDeploy: true
     branch: main
-    rootDir: backend
     # Force redeploy to pick up Supabase client fix and new OpenAI API key
