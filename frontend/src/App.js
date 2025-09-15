@@ -463,60 +463,65 @@ function App() {
       setIdeas(prevIdeas => [...prevIdeas, ...savedIdeas]);
       
       try {
-        // AI scoring
+        // AI scoring - only for ideas that don't already have scores
         const { isAIConfigured } = await import('./config/ai');
         if (isAIConfigured()) {
           const { default: aiService } = await import('./services/aiService');
           
-          setIdeas(prevIdeas =>
-            prevIdeas.map(idea =>
-              savedIdeas.some(savedIdea => savedIdea.id === idea.id)
-                ? { ...idea, isScoring: true }
-                : idea
-            )
-          );
-
-          if (savedIdeas.length > 1) {
-            const scoredIdeas = await aiService.fastBatchScore(savedIdeas);
-            setIdeas(prevIdeas =>
-              prevIdeas.map(idea => {
-                const scoredIdea = scoredIdeas.find(scored => scored.title === idea.title);
-                if (scoredIdea) {
-                  const updatedIdea = {
-                    ...idea,
-                    aiScore: scoredIdea.aiScore,
-                    isScoring: false,
-                    analyzedAt: scoredIdea.analyzedAt
-                  };
-                  // Save updated score to database
-                  saveIdeaToDatabase(updatedIdea);
-                  return updatedIdea;
-                }
-                return idea;
-              })
-            );
-          } else {
-            const analysis = await aiService.analyzeIdea(savedIdeas[0], ideas);
-            const updatedIdea = {
-              ...savedIdeas[0],
-              aiScore: analysis.overallScore,
-              isScoring: false,
-              analyzedAt: new Date().toISOString()
-            };
-            
+          // Filter out ideas that already have AI scores (like AI-generated ideas)
+          const ideasToScore = savedIdeas.filter(idea => idea.aiScore === undefined || idea.aiScore === null);
+          
+          if (ideasToScore.length > 0) {
             setIdeas(prevIdeas =>
               prevIdeas.map(idea =>
-                idea.id === savedIdeas[0].id
-                  ? updatedIdea
+                ideasToScore.some(ideaToScore => ideaToScore.id === idea.id)
+                  ? { ...idea, isScoring: true }
                   : idea
-            )
+              )
             );
-            
-            // Save updated score to database
-            try {
-              await saveIdeaToDatabase(updatedIdea);
-            } catch (error) {
-              console.error('Error saving AI score to database:', error);
+
+            if (ideasToScore.length > 1) {
+              const scoredIdeas = await aiService.fastBatchScore(ideasToScore);
+              setIdeas(prevIdeas =>
+                prevIdeas.map(idea => {
+                  const scoredIdea = scoredIdeas.find(scored => scored.title === idea.title);
+                  if (scoredIdea) {
+                    const updatedIdea = {
+                      ...idea,
+                      aiScore: scoredIdea.aiScore,
+                      isScoring: false,
+                      analyzedAt: scoredIdea.analyzedAt
+                    };
+                    // Save updated score to database
+                    saveIdeaToDatabase(updatedIdea);
+                    return updatedIdea;
+                  }
+                  return idea;
+                })
+              );
+            } else if (ideasToScore.length === 1) {
+              const analysis = await aiService.analyzeIdea(ideasToScore[0], ideas);
+              const updatedIdea = {
+                ...ideasToScore[0],
+                aiScore: analysis.overallScore,
+                isScoring: false,
+                analyzedAt: new Date().toISOString()
+              };
+              
+              setIdeas(prevIdeas =>
+                prevIdeas.map(idea =>
+                  idea.id === ideasToScore[0].id
+                    ? updatedIdea
+                    : idea
+                )
+              );
+              
+              // Save updated score to database
+              try {
+                await saveIdeaToDatabase(updatedIdea);
+              } catch (error) {
+                console.error('Error saving AI score to database:', error);
+              }
             }
           }
         }
@@ -1412,9 +1417,9 @@ function App() {
                 onClick={() => setShowUserDropdown(!showUserDropdown)}
                 title="User menu"
               >
-                {user?.user_metadata?.avatar_url ? (
+                {user?.user_metadata?.avatar_url || localStorage.getItem('youtube-idea-hub-avatar') ? (
                   <img 
-                    src={user.user_metadata.avatar_url} 
+                    src={user?.user_metadata?.avatar_url || localStorage.getItem('youtube-idea-hub-avatar')} 
                     alt={user.user_metadata?.full_name || 'User'} 
                     className="avatar-image"
                   />
@@ -1430,9 +1435,9 @@ function App() {
                   <div className="dropdown-header">
                     <div className="dropdown-user-info">
                       <div className="dropdown-avatar">
-                        {user?.user_metadata?.avatar_url ? (
+                        {user?.user_metadata?.avatar_url || localStorage.getItem('youtube-idea-hub-avatar') ? (
                           <img 
-                            src={user.user_metadata.avatar_url} 
+                            src={user?.user_metadata?.avatar_url || localStorage.getItem('youtube-idea-hub-avatar')} 
                             alt={user.user_metadata?.full_name || 'User'} 
                             className="dropdown-avatar-image"
                           />
