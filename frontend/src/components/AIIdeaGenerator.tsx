@@ -107,7 +107,6 @@ const AIIdeaGenerator: React.FC<AIIdeaGeneratorProps> = ({
         script: '',
         lift: generatedIdeas[index].lift,
         type: generatedIdeas[index].type,
-        owners: [],
         tags: [
           generatedIdeas[index].lift + ' Lift',
           generatedIdeas[index].type,

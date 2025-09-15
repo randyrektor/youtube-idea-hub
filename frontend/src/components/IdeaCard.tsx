@@ -131,14 +131,6 @@ export const IdeaCard: React.FC<IdeaCardProps> = ({
       <div className="card-header">
         <div className="title-container">
           <h4 className="card-title">{idea.title}</h4>
-          {/* Title Suggestions Button */}
-          <button 
-            className="title-suggestion-btn"
-            onClick={handleGenerateTitleSuggestions}
-            title="Generate title suggestions"
-          >
-            ✦
-          </button>
         </div>
         <div className="card-actions">
           <button 
@@ -149,6 +141,33 @@ export const IdeaCard: React.FC<IdeaCardProps> = ({
           </button>
         </div>
       </div>
+
+      {/* AI Icon Button - positioned absolutely, aligned with AI score badge */}
+      <button 
+        className="ai-icon-button"
+        onClick={handleGenerateTitleSuggestions}
+        title="Generate title suggestions"
+        style={{
+          position: 'absolute',
+          bottom: '12px',
+          right: '50px',
+          width: '28px',
+          height: '28px',
+          borderRadius: '50%',
+          background: 'rgba(102, 126, 234, 0.1)',
+          border: '2px solid rgba(102, 126, 234, 0.3)',
+          color: '#667eea',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          fontSize: '14px',
+          cursor: 'pointer',
+          transition: 'all 0.2s ease',
+          zIndex: 1000
+        }}
+      >
+        ✦
+      </button>
 
       {/* AI Score Display - positioned relative to the idea card */}
       {isLoadingScore ? (
@@ -161,8 +180,8 @@ export const IdeaCard: React.FC<IdeaCardProps> = ({
           className="ai-score-badge completed-score"
           style={{ 
             position: 'absolute',
-            bottom: '8px',
-            right: '8px',
+            bottom: '10px',
+            right: '12px',
             width: '28px',
             height: '28px',
             borderRadius: '50%',

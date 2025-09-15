@@ -1351,29 +1351,8 @@ function App() {
     <div className="app">
       <header className="app-header">
         <div className="header-left">
-          <h1> YouTube Idea Hub</h1>
-          {isAuthenticated && user && (
-            <div className="collaborative-users">
-              <div className="current-user-badge">
-                <div className="user-avatar-small">
-                  {user?.user_metadata?.avatar_url ? (
-                    <img 
-                      src={user.user_metadata.avatar_url} 
-                      alt={user.user_metadata?.full_name || 'You'} 
-                      className="avatar-image-small"
-                      title={`${user.user_metadata?.full_name || user.email} (You)`}
-                    />
-                  ) : (
-                    <div className="avatar-initials-small" title={`${user.user_metadata?.full_name || user.email} (You)`}>
-                      {user?.user_metadata?.full_name?.[0] || user?.email?.[0] || 'U'}
-                    </div>
-                  )}
-                </div>
-                <span className="user-status">You</span>
-              </div>
-              {/* Future: Add other collaborative users here */}
-            </div>
-          )}
+          <h1> Syntax Idea Hub</h1>
+
         </div>
         <div className="header-right">
           <div className="header-actions">
@@ -1426,14 +1405,7 @@ function App() {
             >
               {theme === 'light' ? '☀' : '☾'}
             </button>
-            <button 
-              className="settings-button"
-              onClick={() => setShowSettings(true)}
-              aria-label="Open Settings"
-              title="Settings"
-            >
-              ⚙
-            </button>
+
             <div className="user-avatar-container">
               <div 
                 className="user-avatar"
@@ -1484,6 +1456,15 @@ function App() {
                   <div className="dropdown-divider"></div>
                   
                   <div className="dropdown-actions">
+                    <button 
+                      className="dropdown-action-item"
+                      onClick={() => {
+                        setShowSettings(true);
+                        setShowUserDropdown(false);
+                      }}
+                    >
+                      Settings
+                    </button>
                     <button 
                       className="dropdown-action-item"
                       onClick={async () => {
@@ -2178,7 +2159,6 @@ function QuickAddModal({ onClose, onAdd }) {
     description: '',
     lift: '',
     type: '',
-    owners: '',
     tags: ''
   });
 
@@ -2197,7 +2177,6 @@ function QuickAddModal({ onClose, onAdd }) {
     
     const ideaData = {
       ...formData,
-      owners: formData.owners.split(',').map(owner => owner.trim()).filter(Boolean),
       tags: formData.tags.split(',').map(tag => tag.trim()).filter(Boolean),
       thumbnail: '',
       script: ''
@@ -2273,16 +2252,6 @@ function QuickAddModal({ onClose, onAdd }) {
             </div>
           </div>
 
-          <div className="form-group">
-            <label htmlFor="owners">Owners (comma-separated)</label>
-            <input
-              id="owners"
-              type="text"
-              value={formData.owners}
-              onChange={(e) => setFormData({...formData, owners: e.target.value})}
-              placeholder="Scott, Wes, CJ"
-            />
-          </div>
 
           <div className="form-group">
             <label htmlFor="description">Description</label>

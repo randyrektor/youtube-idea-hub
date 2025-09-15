@@ -93,17 +93,17 @@ const Auth: React.FC<AuthProps> = ({ onAuthChange }) => {
             {user.user_metadata?.avatar_url ? (
               <img 
                 src={user.user_metadata.avatar_url} 
-                alt={user.user_metadata?.full_name || 'User'} 
+                alt={localStorage.getItem('youtube-idea-hub-user-full-name') || user.user_metadata?.full_name || 'User'} 
                 className="avatar-image"
               />
             ) : (
               <div className="avatar-placeholder">
-                {user.user_metadata?.full_name?.[0] || user.email?.[0] || 'U'}
+                {localStorage.getItem('youtube-idea-hub-user-full-name')?.[0] || user.user_metadata?.full_name?.[0] || user.email?.[0] || 'U'}
               </div>
             )}
           </div>
           <div className="user-details">
-            <h3>{user.user_metadata?.full_name || 'User'}</h3>
+            <h3>{localStorage.getItem('youtube-idea-hub-user-full-name') || user.user_metadata?.full_name || 'User'}</h3>
             <p>{user.email}</p>
           </div>
           <button 

@@ -190,9 +190,8 @@ body.theme-dark .dropdown-item:hover {
   color: #8b9dc3;
 }
 
-/* Theme toggle and Settings buttons - shared styles */
-.theme-toggle,
-.settings-button {
+/* Theme toggle button styles */
+.theme-toggle {
   background: rgba(255, 255, 255, 0.95);
   border: 2px solid rgba(255, 255, 255, 0.2);
   color: #2c3e50;
@@ -208,22 +207,19 @@ body.theme-dark .dropdown-item:hover {
   justify-content: center;
 }
 
-body.theme-dark .theme-toggle,
-body.theme-dark .settings-button {
+body.theme-dark .theme-toggle {
   background: rgba(26, 26, 26, 0.8);
   border-color: rgba(255, 255, 255, 0.1);
   color: #ffffff;
 }
 
-.theme-toggle:hover,
-.settings-button:hover {
+.theme-toggle:hover {
   transform: translateY(-2px);
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
   border-color: #667eea;
 }
 
-body.theme-dark .theme-toggle:hover,
-body.theme-dark .settings-button:hover {
+body.theme-dark .theme-toggle:hover {
   border-color: #8b9dc3;
 }
 
@@ -375,8 +371,6 @@ body.theme-dark .secondary-btn {
   justify-content: center;
 }
 
-/* Update the card styles to be much more compact */
-
 /* Idea Cards with frosted glass effect - COMPACT VERSION */
 .idea-card {
   background: rgba(255, 255, 255, 0.95);
@@ -469,6 +463,15 @@ body.theme-dark .idea-card[draggable="true"]::before {
   /* Add padding to prevent tag hover clipping */
   padding-top: 0.25rem;
   padding-bottom: 0.25rem;
+  /* Align with AI icon button positioning */
+  padding-right: 2rem;
+  margin-right: 0.5rem;
+  /* Position tags to align vertically with AI icon button */
+  position: absolute !important;
+  bottom: 12px !important;
+  left: 0.5rem !important;
+  right: 3.5rem !important;
+  z-index: 1;
 }
 
 .tags-display {
@@ -667,8 +670,6 @@ body.theme-dark .tags-input.editing:focus {
   box-shadow: 0 2px 4px rgba(118, 75, 162, 0.2);
 }
 
-/* Owner suggestion button styling removed - not needed */
-
 /* Dark theme support for tag suggestions */
 body.theme-dark .suggestions-title {
   color: rgba(255, 255, 255, 0.7);
@@ -716,8 +717,6 @@ body.theme-dark .idea-card:hover {
   border-color: #8b9dc3;
 }
 
-/* Dark theme drag and drop enhancements removed - too fancy */
-
 body.theme-dark .column-content:empty::before {
   color: rgba(139, 157, 195, 0.8);
 }
@@ -726,11 +725,13 @@ body.theme-dark .column-content:empty::before {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  margin-bottom: 0.3rem; /* Reduced spacing for more compact cards */
   min-width: 0;
   flex: 1;
   width: 100%;
   flex-wrap: wrap;
+  padding: 0.2rem;
+  /* Ensure proper spacing for absolutely positioned tags */
+  padding-bottom: 2.5rem;
 }
 
 .card-title {
@@ -1237,8 +1238,6 @@ body.theme-dark .search-feedback {
 body.theme-dark .search-input:focus {
   border-color: #8b9dc3;
 }
-
-
 
 .filter-controls {
   display: flex;
@@ -3528,76 +3527,41 @@ body.theme-dark .regenerate-btn:hover {
   border-color: rgba(139, 157, 195, 0.5);
 }
 
-/* Collaborative Users Display */
-.collaborative-users {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  margin-left: 1rem;
-}
-
-.current-user-badge {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.25rem 0.5rem;
-  background: rgba(102, 126, 234, 0.1);
-  border: 1px solid rgba(102, 126, 234, 0.2);
-  border-radius: 20px;
-  font-size: 0.8rem;
-  color: #667eea;
-  transition: all 0.2s ease;
-}
-
-.current-user-badge:hover {
-  background: rgba(102, 126, 234, 0.15);
-  border-color: rgba(102, 126, 234, 0.3);
-}
-
-.user-avatar-small {
-  width: 20px;
-  height: 20px;
+/* AI Icon Button - positioned absolutely on each card */
+.ai-icon-button {
+  position: absolute;
+  bottom: 12px;
+  right: 50px;
+  width: 28px;
+  height: 28px;
   border-radius: 50%;
-  overflow: hidden;
-  flex-shrink: 0;
-}
-
-.avatar-image-small {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.avatar-initials-small {
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
+  background: rgba(102, 126, 234, 0.1);
+  border: 2px solid rgba(102, 126, 234, 0.3);
+  color: #667eea;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 0.7rem;
-  font-weight: 600;
-  text-transform: uppercase;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  z-index: 1000;
 }
 
-.user-status {
-  font-weight: 500;
-  white-space: nowrap;
+.ai-icon-button:hover {
+  background: rgba(102, 126, 234, 0.2);
+  border-color: rgba(102, 126, 234, 0.5);
+  transform: scale(1.1);
+  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
 }
 
-/* Dark theme adjustments */
-body.theme-dark .current-user-badge {
+body.theme-dark .ai-icon-button {
   background: rgba(139, 157, 195, 0.1);
-  border-color: rgba(139, 157, 195, 0.2);
+  border-color: rgba(139, 157, 195, 0.3);
   color: #8b9dc3;
 }
 
-body.theme-dark .current-user-badge:hover {
-  background: rgba(139, 157, 195, 0.15);
-  border-color: rgba(139, 157, 195, 0.3);
-}
-
-body.theme-dark .avatar-initials-small {
-  background: linear-gradient(135deg, #8b9dc3 0%, #a8b5d1 100%);
+body.theme-dark .ai-icon-button:hover {
+  background: rgba(139, 157, 195, 0.2);
+  border-color: rgba(139, 157, 195, 0.5);
+  box-shadow: 0 2px 8px rgba(139, 157, 195, 0.3);
 }
